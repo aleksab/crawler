@@ -3,12 +3,16 @@ package no.hio.crawler.util;
 import java.net.URI;
 
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Link utility methods. All links in the crawler should be without http:// and without www. All links should also not end with /
  */
 public class LinkUtil
 {
+	private static final Logger	logger	= LoggerFactory.getLogger(LinkUtil.class);
+
 	/**
 	 * Determine which "level" a link has. This assumes that each sub level will add a / to it's path. So test.com/level1 is on level 1 while
 	 * test.com/level1/level2 is on level 2.
@@ -73,6 +77,7 @@ public class LinkUtil
 		}
 		catch (Exception ex)
 		{
+			logger.error("Unknown error", ex);
 			throw new IllegalArgumentException("Illegal link");
 		}
 	}

@@ -2,6 +2,7 @@ package no.hio.crawler.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import no.hio.crawler.model.Link;
 import no.hio.crawler.model.Page;
@@ -34,5 +35,5 @@ public interface QueueManager
 	 * @param result
 	 * @return
 	 */
-	public void updateQueue(Map<Page, List<Link>> result);
+	public void updateQueue(Map<Page, Set<Link>> result);
 }

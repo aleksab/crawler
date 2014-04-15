@@ -15,5 +15,5 @@ public interface ContentManager
 	 * @param pages
 	 * @return
 	 */
-	public boolean savePages(List<Page> pages);
+	public void savePages(List<Page> pages);
 }

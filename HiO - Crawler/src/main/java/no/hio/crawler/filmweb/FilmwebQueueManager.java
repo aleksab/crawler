@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import no.hio.crawler.model.Link;
@@ -48,16 +49,15 @@ public class FilmwebQueueManager implements QueueManager
 	}
 
 	@Override
-	public void updateQueue(Map<Page, List<Link>> result)
+	public void updateQueue(Map<Page, Set<Link>> result)
 	{
-		logger.info("New result {}", result);
 		for (Page page : result.keySet())
 		{
 			for (Link link : result.get(page))
 			{
 				String domain = LinkUtil.normalizeDomain(link.getLink());
 				if ("filmweb.no".equalsIgnoreCase(domain) && !knownLinks.contains(link))
-				{
+				{					
 					logger.info("Adding link {} to queue", link);
 					knownLinks.add(link);
 					queue.add(link);

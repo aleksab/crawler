@@ -16,7 +16,7 @@ import org.junit.Test;
 public class FileContentManagerTest
 {
 	private FileContentManager	cm		= null;
-	private File				tmpDir	= new File("tmpdir");
+	private File				tmpDir	= new File("target/tmpdir");
 
 	@Before
 	public void setup() throws Exception
@@ -39,12 +39,12 @@ public class FileContentManagerTest
 		StringBuffer content = new StringBuffer("Dette er en side<br>Filmweb\nSiste linje.");
 		Page page = new Page(link, content);
 
-		Assert.assertTrue(cm.savePages(Collections.singletonList(page)));
+		cm.savePages(Collections.singletonList(page));
 
 		// we assume we have the only file in the folder...
 		File checkFile = tmpDir.listFiles()[0];
 		String fileContent = FileUtils.readFileToString(checkFile);
 
-		Assert.assertEquals(content.toString(), fileContent);
+		Assert.assertEquals("URL: filmweb.no\n" + content.toString(), fileContent);
 	}
 }
