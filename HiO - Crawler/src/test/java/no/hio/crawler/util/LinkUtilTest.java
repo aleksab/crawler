@@ -11,10 +11,10 @@ public class LinkUtilTest
 		Assert.assertEquals("test.com", LinkUtil.normalizeDomain("http://www.test.com/"));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testNormalizeDomain2()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain("http://www.test.com/[Url]"));
+		LinkUtil.normalizeDomain("http://www.test.com/[Url]");
 	}
 
 	@Test
@@ -35,28 +35,28 @@ public class LinkUtilTest
 		Assert.assertEquals("test.com", LinkUtil.normalizeDomain("http://test.com/"));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainWithoutHttpBug()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain("JavaScript:showSearchPanel();"));
+		LinkUtil.normalizeDomain("JavaScript:showSearchPanel();");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainWithoutHttp()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain("//:test.com/"));
+		LinkUtil.normalizeDomain("//:test.com/");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainWithoutHttp2()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain("//test.com/"));
+		LinkUtil.normalizeDomain("//test.com/");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainWithoutHttp3()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain("/test.com/"));
+		LinkUtil.normalizeDomain("/test.com/");
 	}
 
 	@Test
@@ -89,16 +89,16 @@ public class LinkUtilTest
 		Assert.assertEquals("www", LinkUtil.normalizeDomain("www/foo"));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainInvalid3()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain(""));
+		LinkUtil.normalizeDomain("");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeDomainInvalid4()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeDomain(null));
+		LinkUtil.normalizeDomain(null);
 	}
 
 	@Test
@@ -143,16 +143,16 @@ public class LinkUtilTest
 		Assert.assertEquals(0, LinkUtil.determineLinkLevel("test.com"));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testDetermineLinkLevelInvalid()
 	{
-		Assert.assertEquals(-1, LinkUtil.determineLinkLevel(""));
+		LinkUtil.determineLinkLevel("");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testDetermineLinkLevelInvalid2()
 	{
-		Assert.assertEquals(-1, LinkUtil.determineLinkLevel(null));
+		LinkUtil.determineLinkLevel(null);
 	}
 
 	@Test
@@ -204,16 +204,16 @@ public class LinkUtilTest
 		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("www.test.com/test/test/"));
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeLinkInvalid()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeLink(""));
+		LinkUtil.normalizeLink("");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeLinkInvalid2()
 	{
-		Assert.assertEquals(null, LinkUtil.normalizeLink(null));
+		LinkUtil.normalizeLink(null);
 	}
 
 	@Test
@@ -237,24 +237,24 @@ public class LinkUtilTest
 	@Test
 	public void testGetTopLevelDomain4()
 	{
-		Assert.assertEquals(null, LinkUtil.getTopLevelDomain("test"));
+		LinkUtil.getTopLevelDomain("test");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testGetTopLevelDomain5()
 	{
-		Assert.assertEquals(null, LinkUtil.getTopLevelDomain("www.test..com"));
+		LinkUtil.getTopLevelDomain("www.test..com");
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testGetTopLevelDomain6()
 	{
-		Assert.assertEquals(null, LinkUtil.getTopLevelDomain(null));
+		LinkUtil.getTopLevelDomain(null);
 	}
 
-	@Test
+	@Test(expected = IllegalArgumentException.class)
 	public void testGetTopLevelDomain7()
 	{
-		Assert.assertEquals(null, LinkUtil.getTopLevelDomain(""));
+		LinkUtil.getTopLevelDomain("");
 	}
 }
