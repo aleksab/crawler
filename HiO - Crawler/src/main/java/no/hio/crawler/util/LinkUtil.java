@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
  */
 public class LinkUtil
 {
-	private static final Logger	logger	= LoggerFactory.getLogger(LinkUtil.class);
+	private static final Logger	logger	= LoggerFactory.getLogger("fileLogger");
 
 	/**
 	 * Determine which "level" a link has. This assumes that each sub level will add a / to it's path. So test.com/level1 is on level 1 while
@@ -22,7 +22,7 @@ public class LinkUtil
 	 */
 	public static int determineLinkLevel(String link)
 	{
-		link = normalizeLink(link);
+		link = normalizeLink(link, true);
 
 		if (link == null || link.length() == 0)
 			return -1;
@@ -61,7 +61,7 @@ public class LinkUtil
 	{
 		try
 		{
-			link = normalizeLink(link);
+			link = normalizeLink(link, true);
 
 			if (link == null || link.length() == 0)
 				return null;
@@ -73,7 +73,7 @@ public class LinkUtil
 			URI uri = new URI("http://" + link);
 			link = uri.getHost();
 
-			return normalizeLink(link);
+			return normalizeLink(link, true);
 		}
 		catch (Exception ex)
 		{
@@ -88,7 +88,7 @@ public class LinkUtil
 	 * @param link
 	 * @return
 	 */
-	public static String normalizeLink(String link)
+	public static String normalizeLink(String link, boolean removeDynamicPages)
 	{
 		if (link == null || link.length() == 0)
 			throw new IllegalArgumentException("Empty link");
@@ -105,6 +105,14 @@ public class LinkUtil
 
 		// Remove sessionids - still the same page
 		link = StringUtils.substringBeforeLast(link, ";jsessionid");
+
+		// Remove @ as part of email domains or username authentication
+		if (StringUtils.contains(link, "@"))
+			link = StringUtils.substringAfterLast(link, "@");
+
+		// Remove dynamic parameters (everything after ?)
+		if (removeDynamicPages)
+			link = StringUtils.substringBefore(link, "?");
 
 		// remove http://
 		if (StringUtils.startsWithIgnoreCase(link, "http://"))

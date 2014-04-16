@@ -158,62 +158,80 @@ public class LinkUtilTest
 	@Test
 	public void testnormalizeLink()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test/"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test/", true));
 	}
 
 	@Test
 	public void testnormalizeLink2()
 	{
-		Assert.assertEquals("test.com/test/test/?param=id", LinkUtil.normalizeLink("http://test.com/test/test/?param=id"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test/?param=id", true));
 	}
 
 	@Test
 	public void testnormalizeLink3()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test#test"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test#test", true));
 	}
 
 	@Test
 	public void testnormalizeLink4()
 	{
-		Assert.assertEquals("test.com/test/test?test=test1&test2=test3",
-				LinkUtil.normalizeLink("http://test.com/test/test?test=test1&test2=test3;jsessionid=123123"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("http://test.com/test/test?test=test1&test2=test3;jsessionid=123123", true));
 	}
 
 	@Test
 	public void testnormalizeLink5()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("      http://test.com/test/test/          "));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("      http://test.com/test/test/          ", true));
 	}
 
 	@Test
 	public void testnormalizeLink6()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("HTTP://test.com/test/test/"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("HTTP://test.com/test/test/", true));
 	}
 
 	@Test
 	public void testnormalizeLink7()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("HTTP://www.test.com/test/test/"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("HTTP://www.test.com/test/test/", true));
 	}
 
 	@Test
 	public void testnormalizeLink8()
 	{
-		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("www.test.com/test/test/"));
+		Assert.assertEquals("test.com/test/test", LinkUtil.normalizeLink("www.test.com/test/test/", true));
+	}
+
+	@Test
+	public void testnormalizeLink9()
+	{
+		Assert.assertEquals("test.com/test/test?test=test1&test2=test3",
+				LinkUtil.normalizeLink("http://test.com/test/test?test=test1&test2=test3;jsessionid=123123", false));
+	}
+	
+	@Test
+	public void testnormalizeLink10()
+	{
+		Assert.assertEquals("test.com/test/test/?param=id", LinkUtil.normalizeLink("http://test.com/test/test/?param=id", false));
+	}
+	
+	@Test
+	public void testnormalizeLink11()
+	{
+		Assert.assertEquals("filmweb.no", LinkUtil.normalizeLink("mailto:kundeservice@filmweb.no", false));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeLinkInvalid()
 	{
-		LinkUtil.normalizeLink("");
+		LinkUtil.normalizeLink("", true);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testnormalizeLinkInvalid2()
 	{
-		LinkUtil.normalizeLink(null);
+		LinkUtil.normalizeLink(null, true);
 	}
 
 	@Test

@@ -21,10 +21,11 @@ import org.slf4j.LoggerFactory;
  */
 public class FilmwebQueueManager implements QueueManager
 {
-	private static final Logger			logger		= LoggerFactory.getLogger(FilmwebQueueManager.class);
+	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
+	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
-	private ConcurrentLinkedQueue<Link>	queue		= null;
-	private HashSet<Link>				knownLinks	= null;
+	private ConcurrentLinkedQueue<Link>	queue			= null;
+	private HashSet<Link>				knownLinks		= null;
 
 	public FilmwebQueueManager(List<Link> seeds)
 	{
@@ -57,13 +58,15 @@ public class FilmwebQueueManager implements QueueManager
 			{
 				String domain = LinkUtil.normalizeDomain(link.getLink());
 				if ("filmweb.no".equalsIgnoreCase(domain) && !knownLinks.contains(link))
-				{					
+				{
 					logger.info("Adding link {} to queue", link);
 					knownLinks.add(link);
 					queue.add(link);
 				}
 			}
 		}
+
+		consoleLogger.info("Queue size: {}, knownLinks: {}", queue.size(), knownLinks.size());
 	}
 
 }

@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FileContentManager implements ContentManager
 {
-	private static final Logger	logger	= LoggerFactory.getLogger(FileContentManager.class);
+	private static final Logger	logger	= LoggerFactory.getLogger("fileLogger");
 
 	private String				folder	= null;
 

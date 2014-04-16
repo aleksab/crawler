@@ -17,7 +17,7 @@ public class Link
 	public Link(String link)
 	{
 		super();
-		this.link = LinkUtil.normalizeLink(link);
+		this.link = LinkUtil.normalizeLink(link, true);
 	}
 
 	public String getLink()

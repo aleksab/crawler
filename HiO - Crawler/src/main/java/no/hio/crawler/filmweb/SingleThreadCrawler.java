@@ -1,5 +1,6 @@
 package no.hio.crawler.filmweb;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,7 +21,8 @@ import org.slf4j.LoggerFactory;
 
 public class SingleThreadCrawler implements Runnable
 {
-	private static final Logger	logger			= LoggerFactory.getLogger(SingleThreadCrawler.class);
+	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
+	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
 	private static final String	USER_AGENT		= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)";
 	private static final int	PAGE_TIMEOUT	= 1000 * 10;
@@ -42,6 +44,12 @@ public class SingleThreadCrawler implements Runnable
 		super();
 		this.qm = qm;
 		this.cm = cm;
+	}
+
+	public void printStats()
+	{
+		File outputDir = new File("target/output");
+		consoleLogger.info("Pages saved: " + outputDir.listFiles().length);
 	}
 
 	@Override
@@ -114,19 +122,20 @@ public class SingleThreadCrawler implements Runnable
 			String link = element.attr("abs:href");
 			if (link != null)
 			{
-				links.add(new Link(LinkUtil.normalizeLink(link)));
+				links.add(new Link(LinkUtil.normalizeLink(link, true)));
 			}
 		}
 
 		return links;
 	}
-
+	
+	// TODO: this can be smarter. subtract time used in case of timeout from pages etc
 	void beNice()
 	{
 		try
 		{
-			// sleep a random time between 1.5 and 7 seconds
-			long time = 1500 + (long) (Math.random() * 5500);
+			// sleep a random time between 1 and 4 seconds
+			long time = 1000 + (long) (Math.random() * 3000);
 			logger.info("Waiting for {} ms", time);
 			Thread.sleep(time);
 		}
