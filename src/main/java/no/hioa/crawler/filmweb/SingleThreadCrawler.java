@@ -19,7 +19,7 @@ import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SingleThreadCrawler implements Runnable
+public class SingleThreadCrawler
 {
 	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
@@ -36,7 +36,7 @@ public class SingleThreadCrawler implements Runnable
 
 		SingleThreadCrawler crawler = new SingleThreadCrawler(new FilmwebQueueManager(Collections.singletonList(new Link("filmweb.no"))),
 				new FileContentManager("target/output"));
-		crawler.run();
+		crawler.printStats();
 	}
 
 	public SingleThreadCrawler(QueueManager qm, ContentManager cm)
@@ -45,15 +45,17 @@ public class SingleThreadCrawler implements Runnable
 		this.qm = qm;
 		this.cm = cm;
 	}
-
+	
 	public void printStats()
 	{
 		File outputDir = new File("target/output");
 		consoleLogger.info("Pages saved: " + outputDir.listFiles().length);
 	}
 
-	@Override
-	public void run()
+	/**
+	 * Crawl the filmweb and store page content to a file. The crawler will not exit before all found links have been crawled.
+	 */
+	public void crawlFilmweb()
 	{
 		// get first link to start with
 		Link link = qm.getNextLink();
@@ -128,7 +130,7 @@ public class SingleThreadCrawler implements Runnable
 
 		return links;
 	}
-	
+
 	// TODO: this can be smarter. subtract time used in case of timeout from pages etc
 	void beNice()
 	{
