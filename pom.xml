@@ -102,8 +102,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<addClasspath>false</addClasspath>
-							<mainClass>no.hio.crawler.Crawler</mainClass>
+							<addClasspath>false</addClasspath>							
 						</manifest>
 					</archive>
 				</configuration>
