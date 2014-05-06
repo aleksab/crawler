@@ -64,7 +64,7 @@ public class ParallellReviewCrawler
 		FileUtils.forceMkdir(outputDir);
 
 		consoleLogger.info("Extracting external reviews for filmweb");
-		Map<File, Set<Review>> externalReviews = getExternalReviews();
+		Map<File, Set<Review>> externalReviews = getExternalReviews(inputDir);
 
 		long progress = 0;
 		long totalReviews = externalReviews.size();
@@ -156,11 +156,11 @@ public class ParallellReviewCrawler
 	 * 
 	 * @return
 	 */
-	Map<File, Set<Review>> getExternalReviews()
+	public Map<File, Set<Review>> getExternalReviews(File folder)
 	{
 		Map<File, Set<Review>> movies = new HashMap<>();
 
-		for (File file : inputDir.listFiles())
+		for (File file : folder.listFiles())
 		{
 			FileContent content = getFileContent(file);
 			Set<Review> externalReviews = getExternalReviews(content);
@@ -333,7 +333,7 @@ public class ParallellReviewCrawler
 		}
 	}
 
-	private class Review
+	public class Review
 	{
 		public String	link;
 		public int		rating;
