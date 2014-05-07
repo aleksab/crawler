@@ -2,6 +2,7 @@ package no.hioa.crawler.filmweb;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,7 +10,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import no.hioa.crawler.filmweb.ParallellReviewCrawler.Review;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
+
 import no.hioa.crawler.filmweb.parser.AdressaParser;
 import no.hioa.crawler.filmweb.parser.BtParser;
 import no.hioa.crawler.filmweb.parser.CineParser;
@@ -26,76 +29,199 @@ import no.hioa.crawler.util.LinkUtil;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AggregateContent
+public class AggregateContent extends ParallellReviewCrawler
 {
-	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
+	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
+	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
+
+	private List<ReviewContentParser>	contentParsers;
 
 	public static void main(String[] args)
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		// new AggregateContent().generateXml();
 
-		new AggregateContent().getExternalReviewsContent(new File("C:/Development/workspace juno/Hioa - Crawler/target/output_reviews"));
-		//new AggregateContent().getSiteContent(new File("C:/Development/workspace juno/Hioa - Crawler/target/output_reviews/1397642981353_3.page"));
+		new AggregateContent().generateXml(new File("C:/Development/workspace juno/Hioa - Crawler/target/output/"), new File(
+				"C:/Development/workspace juno/Hioa - Crawler/target/output_reviews/"), new File("result.xml"));
 	}
-
-	private List<SiteParser>	siteParsers;
 
 	public AggregateContent()
 	{
-		siteParsers = new LinkedList<>();
-		siteParsers.add(new DagbladetParser());
-		siteParsers.add(new Side3Parser());
-		siteParsers.add(new VgParser());
-		siteParsers.add(new CineParser());
-		siteParsers.add(new FilmMagasinetParser());
-		siteParsers.add(new BtParser());
-		siteParsers.add(new IgnoreParser());
-		siteParsers.add(new OsloByParser());
-		siteParsers.add(new Tv2Parser());
-		siteParsers.add(new AdressaParser());
-		siteParsers.add(new NordlysParser());
-		siteParsers.add(new NrkParser());
+		super(null, null);
+		contentParsers = new LinkedList<>();
+		contentParsers.add(new DagbladetParser());
+		contentParsers.add(new Side3Parser());
+		contentParsers.add(new VgParser());
+		contentParsers.add(new CineParser());
+		contentParsers.add(new FilmMagasinetParser());
+		contentParsers.add(new BtParser());
+		contentParsers.add(new IgnoreParser());
+		contentParsers.add(new OsloByParser());
+		contentParsers.add(new Tv2Parser());
+		contentParsers.add(new AdressaParser());
+		contentParsers.add(new NordlysParser());
+		contentParsers.add(new NrkParser());
 	}
 
-	public void getSiteContent(File file)
+	/**
+	 * Generates a xml file with external reviews for each movie (from filmweb).
+	 * 
+	 * @param filmwebDir
+	 * @param reviewDir
+	 */
+	public void generateXml(File filmwebDir, File reviewDir, File xmlFile)
 	{
-		FileContent content = getFileContent(file);
-		SiteParser parser = new NrkParser();
+		List<Movie> movies = new LinkedList<>();
 
-		consoleLogger.info(parser.getContent(content.content));
-	}
-
-	public void generateXml()
-	{
-		ParallellReviewCrawler crawler = new ParallellReviewCrawler(null, null);
-		Map<File, Set<Review>> externalReviews = crawler.getExternalReviews(new File("C:/Development/workspace juno/Hioa - Crawler/target/output"));
-
-		// check which reviews we do have
-	}
-
-	public void getExternalReviewsContent(File inputDir)
-	{
-		int counter=0;
-		long letters=0;
-		long words=0;
-		HashMap<String, String> names = new HashMap<>();
-		for (File file : inputDir.listFiles())
+		// get all reviews with external links
+		for (File file : filmwebDir.listFiles())
 		{
 			FileContent content = getFileContent(file);
+			Set<Review> externalReviews = getExternalReviews(content);
+			List<ReviewContent> reviews = new LinkedList<>();
 
-			String domain = LinkUtil.normalizeDomain(content.link);
+			// merge with fetch external results
+			for (Review review : externalReviews)
+			{
+				ReviewContent reviewContent = findReviewContent(reviewDir, file.getName(), review, externalReviews.size());
+				String domain = LinkUtil.normalizeDomain(review.getLink());
+
+				if (reviewContent != null)
+				{
+					// see if we can extract the content with one of our parsers
+					for (ReviewContentParser siteParser : contentParsers)
+					{
+						if (siteParser.canParseDomain(domain))
+						{
+							String extractedContent = siteParser.getContent(reviewContent.getContent());
+
+							// treat reviews less than 10 letters as empty
+							if (extractedContent == null || extractedContent.trim().length() < 10)
+								extractedContent = null;
+
+							if (extractedContent != null)
+							{
+								reviewContent.setDomain(domain);
+								reviewContent.setContent(extractedContent);
+								reviews.add(reviewContent);
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			// we only want to keep movies with at least one external reviews
+			if (!reviews.isEmpty())
+			{
+				String title = getTitle(file);
+				String originalTitle = getOriginalTitle(file);
+				movies.add(new Movie(content.link, title, originalTitle, reviews));
+			}
+		}
+
+		logger.info("Extracted content for {} movies", movies.size());
+		consoleLogger.info("Extracted content for {} movies", movies.size());
+		MovieHeader movieHeader = new MovieHeader(movies);
+
+		try
+		{
+			JAXBContext context = JAXBContext.newInstance(MovieHeader.class);
+			Marshaller m = context.createMarshaller();
+			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+			m.marshal(movieHeader, new FileOutputStream(xmlFile));
+		}
+		catch (Exception ex)
+		{
+			logger.error("Unknown error", ex);
+			consoleLogger.error("Unknown error", ex);
+		}
+	}
+
+	/**
+	 * Print stats about which external content we are able to parse content from. The output will be grouped by external domain.
+	 * 
+	 * @param filmwebDir
+	 * @param reviewDir
+	 */
+	public void printParseStats(File filmwebDir, File reviewDir)
+	{
+		Map<String, Integer> hasExternalContent = new HashMap<>();
+		Map<String, Integer> noExternalContent = new HashMap<>();
+
+		// TODO: This can be improved by also merging with the movies from filmweb in order to figure out which links we were not able to download.
+
+		// get all reviews with external links
+		for (File file : filmwebDir.listFiles())
+		{
+			FileContent content = getFileContent(file);
+			Set<Review> externalReviews = getExternalReviews(content);
+
+			// merge with fetch external results
+			for (Review review : externalReviews)
+			{
+				ReviewContent reviewContent = findReviewContent(reviewDir, file.getName(), review, externalReviews.size());
+				String domain = LinkUtil.normalizeDomain(review.getLink());
+
+				if (reviewContent == null)
+				{
+					if (noExternalContent.containsKey(domain))
+						noExternalContent.put(domain, noExternalContent.get(domain) + 1);
+					else
+						noExternalContent.put(domain, 1);
+				}
+				else
+				{
+					if (hasExternalContent.containsKey(domain))
+						hasExternalContent.put(domain, hasExternalContent.get(domain) + 1);
+					else
+						hasExternalContent.put(domain, 1);
+				}
+			}
+		}
+
+		for (String name : hasExternalContent.keySet())
+		{
+			consoleLogger.info("Link {} has fetched {} external contents", name, hasExternalContent.get(name));
+		}
+
+		consoleLogger.info("-------------------------------------");
+
+		for (String name : noExternalContent.keySet())
+		{
+			consoleLogger.info("Link {} has NOT fetched {} external contents", name, noExternalContent.get(name));
+		}
+	}
+
+	/**
+	 * Prints stats about external reviews fetched, like number of reviews, total letters etc.
+	 * 
+	 * @param inputDir
+	 */
+	public void printReviewStats(File reviewDir)
+	{
+		int counter = 0;
+		long letters = 0;
+		long words = 0;
+		HashMap<String, String> names = new HashMap<>();
+
+		for (File file : reviewDir.listFiles())
+		{
+			ReviewContent content = extractReviewContent(file);
+			String domain = LinkUtil.normalizeDomain(content.getLink());
 
 			boolean found = false;
-			for (SiteParser siteParser : siteParsers)
+			for (ReviewContentParser siteParser : contentParsers)
 			{
 				if (siteParser.canParseDomain(domain))
 				{
-					String extractedContent = siteParser.getContent(content.content);
-					
+					String extractedContent = siteParser.getContent(content.getContent());
+
 					if (extractedContent == null || extractedContent.trim().length() < 10)
 						extractedContent = null;
 					else
@@ -103,9 +229,16 @@ public class AggregateContent
 						counter++;
 						letters += extractedContent.length();
 						words += extractedContent.split(" ").length;
+
+						if (extractedContent.length() > 10000)
+						{
+							consoleLogger.info("Length {} - {}", extractedContent.length(), content.getLink());
+							consoleLogger.info(extractedContent);
+						}
+
 					}
-					
-					content.content = extractedContent;
+
+					content.setContent(extractedContent);
 					found = true;
 					break;
 				}
@@ -113,14 +246,14 @@ public class AggregateContent
 
 			if (!found)
 			{
-				consoleLogger.warn("Could not find parser for domain {} ({}) on file {}", domain, content.link, file.getAbsolutePath());
+				consoleLogger.warn("Could not find parser for domain {} ({}) on file {}", domain, content.getLink(), file.getAbsolutePath());
 				return;
 			}
 
-			String link = LinkUtil.normalizeDomain(content.link);
+			String link = LinkUtil.normalizeDomain(content.getLink());
 
 			if (!names.containsKey(link))
-				names.put(link, content.link);								
+				names.put(link, content.getLink());
 		}
 
 		consoleLogger.info("Unique: " + names.size());
@@ -128,38 +261,52 @@ public class AggregateContent
 		{
 			consoleLogger.info("Name: " + name + " - " + names.get(name));
 		}
-		
+
 		consoleLogger.info("Total reviews: {}", counter);
 		consoleLogger.info("Total letters: {}", letters);
 		consoleLogger.info("Total words: {}", words);
 	}
 
-	public void getExternalReviewsContent2(File inputDir)
+	/**
+	 * Find the review content based on a filmweb movie. Since reviews are not stored in an orderly fashion we need to check all potential reviews for
+	 * a movie.
+	 * 
+	 * @param reviewDir
+	 * @param name
+	 * @param review
+	 * @param maxReviews
+	 * @return
+	 */
+	ReviewContent findReviewContent(File reviewDir, String name, Review review, int maxReviews)
 	{
-		HashMap<String, Integer> names = new HashMap<>();
-		for (File file : inputDir.listFiles())
+		String prefix = reviewDir.getAbsolutePath() + File.separator + StringUtils.substringBefore(name, ".page") + "_";
+
+		for (int i = 1; i <= maxReviews; i++)
 		{
-			FileContent content = getFileContent(file);
+			String reviewName = prefix + i + ".page";
+			File reviewFile = new File(reviewName);
 
-			String link = LinkUtil.normalizeDomain(content.link);
-
-			if (!names.containsKey(link))
-				names.put(link, 1);
-			else
-				names.put(link, names.get(link) + 1);
+			if (reviewFile.exists())
+			{
+				ReviewContent content = extractReviewContent(reviewFile);
+				if (content.getLink().equalsIgnoreCase(review.getLink()))
+					return content;
+			}
 		}
 
-		consoleLogger.info("Unique: " + names.size());
-		for (String name : names.keySet())
-		{
-			consoleLogger.info("Url: " + name + " - Occurence: " + names.get(name));
-		}
+		return null;
 	}
 
-	FileContent getFileContent(File file)
+	/**
+	 * Extract data from a stored review page (from the crawler).
+	 * 
+	 * @param file
+	 * @return
+	 */
+	ReviewContent extractReviewContent(File file)
 	{
 		String link = null;
-		String rating = null;
+		int rating = 0;
 		String name = null;
 		StringBuffer buffer = new StringBuffer();
 
@@ -172,7 +319,7 @@ public class AggregateContent
 
 			if (scanner.hasNextLine())
 			{
-				rating = StringUtils.substringAfter(scanner.nextLine(), "RATING: ").trim();
+				rating = Integer.valueOf(StringUtils.substringAfter(scanner.nextLine(), "RATING: ").trim());
 			}
 
 			if (scanner.hasNextLine())
@@ -191,23 +338,54 @@ public class AggregateContent
 			consoleLogger.error("Could not read content for file " + file.getAbsolutePath(), ex);
 		}
 
-		return new FileContent(link, rating, name, buffer.toString());
+		return new ReviewContent(link, rating, name, buffer.toString());
 	}
 
-	private class FileContent
+	/**
+	 * Extract title from a filmweb movie page.
+	 * 
+	 * @param file
+	 * @return
+	 */
+	String getTitle(File file)
 	{
-		public String	link;
-		public String	rating;
-		public String	name;
-		public String	content;
-
-		public FileContent(String link, String rating, String name, String content)
+		try
 		{
-			super();
-			this.link = link;
-			this.rating = rating;
-			this.name = name;
-			this.content = content;
+			Document doc = Jsoup.parse(file, "UTF-8");
+			Element element = doc.select("div.info > h1").first();
+			if (element != null)
+				return element.text();
 		}
+		catch (Exception ex)
+		{
+			logger.error("Unknown error", ex);
+		}
+
+		return "Unknown";
+	}
+
+	/**
+	 * Extract original title from a filmweb movie page.
+	 * 
+	 * @param file
+	 * @return
+	 */
+	String getOriginalTitle(File file)
+	{
+		try
+		{
+			Document doc = Jsoup.parse(file, "UTF-8");
+			Element element = doc.select("div.orginalTitle").first();
+			if (element != null)
+			{
+				return StringUtils.substringAfter(element.text(), "Originaltittel: ");
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.error("Unknown error", ex);
+		}
+
+		return "Unknown";
 	}
 }

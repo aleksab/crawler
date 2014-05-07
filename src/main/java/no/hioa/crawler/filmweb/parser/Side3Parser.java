@@ -1,13 +1,13 @@
 package no.hioa.crawler.filmweb.parser;
 
-import no.hioa.crawler.filmweb.SiteParser;
+import no.hioa.crawler.filmweb.ReviewContentParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class Side3Parser implements SiteParser
+public class Side3Parser implements ReviewContentParser
 {	
 	public boolean canParseDomain(String domain)
 	{
@@ -24,15 +24,12 @@ public class Side3Parser implements SiteParser
 		Elements elements = doc.select("div#article_content");
 		elements = elements.select("p");
 
-		if (elements.size() < 5)
-			return null;
-
 		StringBuffer buffer = new StringBuffer();
-		for (int i = 4; i < elements.size(); i++)
+		for (Element element : elements)
 		{
-			Element element = elements.get(i);
 			buffer.append(element.text());
 		}
+		
 		return buffer.toString();
 	}
 }

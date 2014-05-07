@@ -1,13 +1,13 @@
 package no.hioa.crawler.filmweb.parser;
 
-import no.hioa.crawler.filmweb.SiteParser;
+import no.hioa.crawler.filmweb.ReviewContentParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-public class Tv2Parser implements SiteParser
+public class Tv2Parser implements ReviewContentParser
 {		
 	public boolean canParseDomain(String domain)
 	{
@@ -33,6 +33,7 @@ public class Tv2Parser implements SiteParser
 			Element element = elements.get(i);
 			buffer.append(element.text());
 		}
+		
 		return buffer.toString();
 	}
 }

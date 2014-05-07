@@ -18,9 +18,6 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -140,9 +137,9 @@ public class ParallellReviewCrawler
 
 		try (BufferedWriter writer = Files.newBufferedWriter(newFile, Charset.defaultCharset()))
 		{
-			writer.append("URL: " + review.link + "\n");
-			writer.append("RATING: " + review.rating + "\n");
-			writer.append("NAME: " + review.name + "\n");
+			writer.append("URL: " + review.getLink() + "\n");
+			writer.append("RATING: " + review.getRating() + "\n");
+			writer.append("NAME: " + review.getName() + "\n");
 			writer.append(content);
 		}
 		catch (IOException ex)
@@ -296,14 +293,14 @@ public class ParallellReviewCrawler
 		@Override
 		public void run()
 		{
-			Document document = fetchContent(review.link);
+			Document document = fetchContent(review.getLink());
 			if (document != null)
 			{
-				logger.info("Got content for {}", review.link);
+				logger.info("Got content for {}", review.getLink());
 				content = document.html();
 			}
 			else
-				logger.warn("Could not get content for {}", review.link);
+				logger.warn("Could not get content for {}", review.getLink());
 		}
 
 		public Review getReview()
@@ -333,34 +330,7 @@ public class ParallellReviewCrawler
 		}
 	}
 
-	public class Review
-	{
-		public String	link;
-		public int		rating;
-		public String	name;
-
-		public Review(String link, int rating, String name)
-		{
-			super();
-			this.link = link;
-			this.rating = rating;
-			this.name = name;
-		}
-
-		@Override
-		public boolean equals(Object obj)
-		{
-			return EqualsBuilder.reflectionEquals(this, obj);
-		}
-
-		@Override
-		public String toString()
-		{
-			return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
-		}
-	}
-
-	private class FileContent
+	class FileContent
 	{
 		public String	link;
 		public String	content;
