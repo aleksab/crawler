@@ -210,7 +210,7 @@ public class ParallellReviewCrawler
 	}
 
 	/**
-	 * First line contains the URL so we discard this when returning file content.
+	 * First line contains the URL and then the content follows
 	 * 
 	 * @param file
 	 * @return
@@ -224,7 +224,7 @@ public class ParallellReviewCrawler
 		{
 			if (scanner.hasNextLine())
 			{
-				link = scanner.nextLine();
+				link = StringUtils.substringAfter(scanner.nextLine(), "URL: ").trim();
 			}
 
 			while (scanner.hasNextLine())

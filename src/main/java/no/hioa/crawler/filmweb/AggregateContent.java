@@ -46,8 +46,10 @@ public class AggregateContent extends ParallellReviewCrawler
 	{
 		PropertyConfigurator.configure("log4j.properties");
 
+		// new AggregateContent().printReviewStats(new File(
+		// "C:/Development/workspace juno/Hioa - Crawler/target/output_reviews/"));
 		new AggregateContent().generateXml(new File("C:/Development/workspace juno/Hioa - Crawler/target/output/"), new File(
-				"C:/Development/workspace juno/Hioa - Crawler/target/output_reviews/"), new File("result.xml"));
+				"C:/Development/workspace juno/Hioa - Crawler/target/output_reviews/"), new File("target/result.xml"));
 	}
 
 	public AggregateContent()
