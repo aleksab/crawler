@@ -37,12 +37,13 @@ public class SingleThreadCrawlerTest
 		Document document = crawler.fetchContent(new Link("https://www.komplett.no/k/kd.aspx?bn=10444"));
 		Assert.assertFalse(crawler.doesPageHasReviews(document));
 	}
-	
+
 	@Test
 	public void testGetReviews()
 	{
 		Document document = crawler.fetchContent(new Link("https://www.komplett.no/asus-rt-n66u-dark-knight-11n-n900-router/746279"));
-		List<Review> reviews = crawler.getReviews(document);
-		Assert.assertEquals(26, reviews.size());
-	}
+		List<ProductReview> reviews = crawler.getReviews(document);
+		Assert.assertEquals(27, reviews.size());
+	}	
 }
+

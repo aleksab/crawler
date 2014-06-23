@@ -1,6 +1,12 @@
 package no.hioa.crawler.komplett;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -32,24 +38,24 @@ public class SingleThreadCrawler
 	private static final int	PAGE_TIMEOUT	= 1000 * 10;
 
 	private QueueManager		qm				= null;
-	private ContentManager		cm				= null;
+	private String				folder			= null;
 
 	public static void main(String[] args) throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
 
 		SingleThreadCrawler crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("komplett.no"))),
-				new FileContentManager("target/komplett"));
+				"target/komplett");
 		crawler.printStats();
 	}
 
-	public SingleThreadCrawler(QueueManager qm, ContentManager cm)
+	public SingleThreadCrawler(QueueManager qm, String folder)
 	{
 		super();
 		this.qm = qm;
-		this.cm = cm;
+		this.folder = folder;
 	}
-	
+
 	public void printStats()
 	{
 		File outputDir = new File("target/komplett");
@@ -59,7 +65,7 @@ public class SingleThreadCrawler
 	/**
 	 * Crawl the komplett and store review content to a file. The crawler will not exit before all found links have been crawled.
 	 */
-	public void crawlFilmweb()
+	public void crawlKomplett()
 	{
 		// get first link to start with
 		Link link = qm.getNextLink();
@@ -80,7 +86,6 @@ public class SingleThreadCrawler
 				{
 					Page page = new Page(link, result.content);
 					qm.updateQueue(Collections.singletonMap(page, result.links));
-					cm.savePages(Collections.singletonList(page));
 				}
 			}
 			catch (Exception ex)
@@ -100,7 +105,14 @@ public class SingleThreadCrawler
 			return null;
 
 		logger.info("Got content for {}", link.getLink());
-		
+
+		if (doesPageHasReviews(document))
+		{
+			List<ProductReview> reviews = getReviews(document);
+			logger.info("Found {} reviews", reviews.size());
+			saveReviews(reviews);
+		}
+
 		StringBuffer content = new StringBuffer(document.html());
 		Set<Link> links = extractLinks(document);
 		logger.info("Found {} links on the page {}", links.size(), link.getLink());
@@ -108,19 +120,110 @@ public class SingleThreadCrawler
 		return new CrawlResult(content, links);
 	}
 
+	void saveReviews(List<ProductReview> reviews)
+	{
+		for (ProductReview review : reviews)
+		{
+			Path newFile = Paths.get(folder, System.currentTimeMillis() + ".review");
+			logger.info("Saving review to file {}", newFile);
+			try (BufferedWriter writer = Files.newBufferedWriter(newFile, Charset.defaultCharset()))
+			{
+				writer.append("URL: " + review.getLink() + "\n");
+				writer.append("AUTHOR: " + review.getAuthor() + "\n");
+				writer.append("DATE: " + review.getDate() + "\n");
+				writer.append("RATING: " + review.getRating() + "\n");
+				writer.append("TITLE: " + review.getName() + "\n");
+				writer.append(review.getContent());
+			}
+			catch (IOException ex)
+			{
+				logger.error("Could not save review " + review + " to file " + newFile, ex);
+			}
+		}
+	}
+
 	boolean doesPageHasReviews(Document doc)
 	{
-		Elements elements = doc.select("a[class*=reviews]");		
-		return (elements.size() != 0);		
+		Elements elements = doc.select("a[class*=reviews]");
+		return (elements.size() != 0);
 	}
-	
-	List<Review> getReviews(Document document)
+
+	List<ProductReview> getReviews(Document document)
 	{
-		List<Review> reviews = new LinkedList<>();
-		
+		try
+		{
+			Elements elements = document.select("a[class*=reviews]");
+			if (elements.size() != 1)
+			{
+				logger.error("Could not get link to reviews");
+				return Collections.emptyList();
+			}
+			else
+			{
+				String sku = document.select("span[itemprop=sku]").first().text();
+				String reviewLink = "https://www.komplett.no/Review.aspx/AjaxList/" + sku + "/";
+				consoleLogger.info("Sku {} has review link {}", sku, reviewLink);
+
+				return getAllReviews(reviewLink, "");
+			}
+		}
+		catch (Exception ex)
+		{
+			logger.error("Unexpected error", ex);
+			return Collections.emptyList();
+		}
+	}
+
+	List<ProductReview> getAllReviews(String reviewBase, String reviewPage)
+	{
+		String reviewLink = reviewBase + reviewPage;
+		consoleLogger.info("Fetching reviews from {}", reviewLink);
+		List<ProductReview> reviews = new LinkedList<>();
+
+		Document reviewContent = fetchContent(new Link(reviewLink));
+
+		Elements reviewElements = reviewContent.select("li[class=review]");
+
+		for (Element element : reviewElements)
+		{
+			ProductReview review = getReview(reviewLink, element);
+			if (review != null)
+				reviews.add(review);
+		}
+
+		Elements buttonElements = reviewContent.select("a[class=button]:containsOwn(>)");
+		if (buttonElements.size() > 0)
+		{
+			consoleLogger.info("Has more pages");
+			reviews.addAll(getAllReviews(reviewBase, buttonElements.get(0).attr("href")));
+		}
+		else
+		{
+			consoleLogger.info("Has NOT more pages");
+		}
+
 		return reviews;
 	}
-	
+
+	ProductReview getReview(String link, Element element)
+	{
+		try
+		{
+			String title = element.select("div[class=review-description] > h3").first().text();
+			String content = element.select("div[class=review-description] > p").first().html();
+			String author = element.select("div[class=review-info] > div[class=name] > a > strong[class=author]").first().text();
+			String date = element.select("div[class=review-info] > div[class=date]").first().text();
+			int rating = Integer.valueOf(element.select("div[class=review-info] > div[class=score] > img").first().attr("alt"));
+
+			return new ProductReview(link, rating, title, content, author, date);
+		}
+		catch (Exception ex)
+		{
+			logger.error("Unexpected error when fetching review from " + link, ex);
+			return null;
+		}
+	}
+
 	Document fetchContent(Link link)
 	{
 		try

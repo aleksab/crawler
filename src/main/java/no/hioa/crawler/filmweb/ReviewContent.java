@@ -1,5 +1,9 @@
 package no.hioa.crawler.filmweb;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+
 public class ReviewContent extends Review
 {
 	private String	content;
@@ -34,5 +38,17 @@ public class ReviewContent extends Review
 	public void setDomain(String domain)
 	{
 		this.domain = domain;
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		return EqualsBuilder.reflectionEquals(this, obj);
+	}
+
+	@Override
+	public String toString()
+	{
+		return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
 	}
 }

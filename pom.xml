@@ -60,7 +60,7 @@
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
 			<version>1.7.2</version>
-		</dependency>
+		</dependency>		
 	</dependencies>
 
 	<repositories>
@@ -68,6 +68,7 @@
 			<id>sonatype-forge</id>
 			<url>https://repository.sonatype.org/content/groups/forge/</url>
 		</repository>
+
 	</repositories>
 
 	<build>
@@ -102,7 +103,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<addClasspath>false</addClasspath>							
+							<addClasspath>false</addClasspath>
 						</manifest>
 					</archive>
 				</configuration>
