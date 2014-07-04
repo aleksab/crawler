@@ -57,7 +57,7 @@ public class KomplettQueueManager implements QueueManager
 			for (Link link : result.get(page))
 			{
 				String domain = LinkUtil.normalizeDomain(link.getLink());
-				if ("komplett.no".equalsIgnoreCase(domain) && !knownLinks.contains(link))
+				if ("mpx.no".equalsIgnoreCase(domain) && !knownLinks.contains(link))
 				{
 					logger.info("Adding link {} to queue", link);
 					knownLinks.add(link);

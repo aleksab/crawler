@@ -19,6 +19,12 @@ public class Link
 		super();
 		this.link = LinkUtil.normalizeLink(link, true);
 	}
+	
+	public Link(String link, boolean removeDynamicPages)
+	{
+		super();
+		this.link = LinkUtil.normalizeLink(link, removeDynamicPages);
+	}
 
 	public String getLink()
 	{

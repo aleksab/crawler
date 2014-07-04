@@ -15,11 +15,9 @@ import java.util.Set;
 
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.model.Page;
-import no.hioa.crawler.service.ContentManager;
-import no.hioa.crawler.service.FileContentManager;
 import no.hioa.crawler.service.QueueManager;
-import no.hioa.crawler.util.LinkUtil;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.Jsoup;
@@ -44,21 +42,23 @@ public class SingleThreadCrawler
 	{
 		PropertyConfigurator.configure("log4j.properties");
 
-		SingleThreadCrawler crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("komplett.no"))),
-				"target/komplett");
-		crawler.printStats();
+		SingleThreadCrawler crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("mpx.no"))),
+				"target/mpx");
+		crawler.crawlKomplett();
 	}
 
-	public SingleThreadCrawler(QueueManager qm, String folder)
+	public SingleThreadCrawler(QueueManager qm, String folder) throws IOException
 	{
 		super();
 		this.qm = qm;
 		this.folder = folder;
+		
+		FileUtils.forceMkdir(new File(folder));
 	}
 
 	public void printStats()
 	{
-		File outputDir = new File("target/komplett");
+		File outputDir = new File("target/mpx");
 		consoleLogger.info("Pages saved: " + outputDir.listFiles().length);
 	}
 
@@ -66,7 +66,7 @@ public class SingleThreadCrawler
 	 * Crawl the komplett and store review content to a file. The crawler will not exit before all found links have been crawled.
 	 */
 	public void crawlKomplett()
-	{
+	{		
 		// get first link to start with
 		Link link = qm.getNextLink();
 
@@ -109,7 +109,7 @@ public class SingleThreadCrawler
 		if (doesPageHasReviews(document))
 		{
 			List<ProductReview> reviews = getReviews(document);
-			logger.info("Found {} reviews", reviews.size());
+			logger.info("Found {} reviews", reviews.size());			
 			saveReviews(reviews);
 		}
 
@@ -161,8 +161,8 @@ public class SingleThreadCrawler
 			else
 			{
 				String sku = document.select("span[itemprop=sku]").first().text();
-				String reviewLink = "https://www.komplett.no/Review.aspx/AjaxList/" + sku + "/";
-				consoleLogger.info("Sku {} has review link {}", sku, reviewLink);
+				String reviewLink = "https://www.mpx.no/Review.aspx/AjaxList/" + sku + "/";
+				logger.info("Sku {} has review link {}", sku, reviewLink);
 
 				return getAllReviews(reviewLink, "");
 			}
@@ -177,7 +177,7 @@ public class SingleThreadCrawler
 	List<ProductReview> getAllReviews(String reviewBase, String reviewPage)
 	{
 		String reviewLink = reviewBase + reviewPage;
-		consoleLogger.info("Fetching reviews from {}", reviewLink);
+		logger.info("Fetching reviews from {}", reviewLink);
 		List<ProductReview> reviews = new LinkedList<>();
 
 		Document reviewContent = fetchContent(new Link(reviewLink));
@@ -193,14 +193,9 @@ public class SingleThreadCrawler
 
 		Elements buttonElements = reviewContent.select("a[class=button]:containsOwn(>)");
 		if (buttonElements.size() > 0)
-		{
-			consoleLogger.info("Has more pages");
+		{			
 			reviews.addAll(getAllReviews(reviewBase, buttonElements.get(0).attr("href")));
-		}
-		else
-		{
-			consoleLogger.info("Has NOT more pages");
-		}
+		}		
 
 		return reviews;
 	}
@@ -248,11 +243,36 @@ public class SingleThreadCrawler
 			String link = element.attr("abs:href");
 			if (link != null)
 			{
-				links.add(new Link(LinkUtil.normalizeLink(link, true)));
+				if (!shouldIgnoreLink(link))
+					links.add(new Link(link, false));
 			}
 		}
 
 		return links;
+	}
+	
+	boolean shouldIgnoreLink(String link)
+	{
+		if (StringUtils.containsIgnoreCase(link, "/search"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, "/signin.aspx?"))
+			return true;		
+		if (StringUtils.containsIgnoreCase(link, "/feed.aspx?"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, "/aboutme.aspx?"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, "/mlf/"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, ".pdf"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, ".jpg"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, ":8083"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, "action="))
+			return true;
+		
+		return false;
 	}
 
 	// TODO: this can be smarter. subtract time used in case of timeout from pages etc

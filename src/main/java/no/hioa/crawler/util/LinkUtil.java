@@ -69,6 +69,9 @@ public class LinkUtil
 			if (link.startsWith("http://"))
 				link = StringUtils.substringAfter(link, "http://");
 
+			if (link.startsWith("https://"))
+				link = StringUtils.substringAfter(link, "https://");
+
 			// we need http in front for the method to work
 			URI uri = new URI("http://" + link);
 			link = uri.getHost();
@@ -117,6 +120,10 @@ public class LinkUtil
 		// remove http://
 		if (StringUtils.startsWithIgnoreCase(link, "http://"))
 			link = StringUtils.removeStartIgnoreCase(link, "http://");
+
+		// remove https://
+		if (StringUtils.startsWithIgnoreCase(link, "https://"))
+			link = StringUtils.removeStartIgnoreCase(link, "https://");
 
 		// remove www.
 		if (StringUtils.startsWithIgnoreCase(link, "www."))

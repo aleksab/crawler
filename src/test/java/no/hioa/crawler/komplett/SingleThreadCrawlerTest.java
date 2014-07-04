@@ -1,10 +1,10 @@
 package no.hioa.crawler.komplett;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import no.hioa.crawler.model.Link;
-import no.hioa.crawler.service.FileContentManager;
 
 import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.nodes.Document;
@@ -20,8 +20,8 @@ public class SingleThreadCrawlerTest
 	public void setup() throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("komplett.no"))), new FileContentManager(
-				"target/komplett"));
+		crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("komplett.no"))), 
+				"target/komplett");
 	}
 
 	@Test
@@ -43,7 +43,15 @@ public class SingleThreadCrawlerTest
 	{
 		Document document = crawler.fetchContent(new Link("https://www.komplett.no/asus-rt-n66u-dark-knight-11n-n900-router/746279"));
 		List<ProductReview> reviews = crawler.getReviews(document);
-		Assert.assertEquals(27, reviews.size());
+		Assert.assertEquals(28, reviews.size());
+	}	
+	
+	@Test
+	public void testSaveReviews()
+	{		
+		List<ProductReview> reviews = new LinkedList<>();
+		reviews.add(new ProductReview("link", 5, "test review", "review content", "author", "01.01.2014"));
+		crawler.saveReviews(reviews);
 	}	
 }
 
