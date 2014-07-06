@@ -4,3 +4,6 @@
 target
 .version
 *.log
+/crawler.log.1
+/crawler.log.2
+/crawler.log.3
