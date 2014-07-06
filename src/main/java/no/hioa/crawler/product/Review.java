@@ -1,4 +1,4 @@
-package no.hioa.crawler.komplett;
+package no.hioa.crawler.product;
 
 import java.util.Date;
 

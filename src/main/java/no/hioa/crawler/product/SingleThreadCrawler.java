@@ -1,4 +1,4 @@
-package no.hioa.crawler.komplett;
+package no.hioa.crawler.product;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -37,36 +37,34 @@ public class SingleThreadCrawler
 
 	private QueueManager		qm				= null;
 	private String				folder			= null;
+	private ProductReviewType	type			= null;
 
 	public static void main(String[] args) throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
 
-		SingleThreadCrawler crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("mpx.no"))),
-				"target/mpx");
-		crawler.crawlKomplett();
+		SingleThreadCrawler crawler = new SingleThreadCrawler(ProductReviewType.getEnum(args[0]));
+		crawler.crawlProductReviews();
 	}
 
-	public SingleThreadCrawler(QueueManager qm, String folder) throws IOException
+	public SingleThreadCrawler(ProductReviewType type) throws IOException
 	{
 		super();
-		this.qm = qm;
-		this.folder = folder;
-		
+
+		this.type = type;
+		this.folder = "target/" + type.getUrl();
+		this.qm = new ProductReviewQueueManager(type);
+
 		FileUtils.forceMkdir(new File(folder));
 	}
 
-	public void printStats()
-	{
-		File outputDir = new File("target/mpx");
-		consoleLogger.info("Pages saved: " + outputDir.listFiles().length);
-	}
-
 	/**
-	 * Crawl the komplett and store review content to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the product view page and store review content to a file. The crawler will not exit before all found links have been crawled.
 	 */
-	public void crawlKomplett()
-	{		
+	public void crawlProductReviews()
+	{
+		consoleLogger.info("Starting to crawl " + type.getUrl());
+
 		// get first link to start with
 		Link link = qm.getNextLink();
 
@@ -109,7 +107,7 @@ public class SingleThreadCrawler
 		if (doesPageHasReviews(document))
 		{
 			List<ProductReview> reviews = getReviews(document);
-			logger.info("Found {} reviews", reviews.size());			
+			logger.info("Found {} reviews", reviews.size());
 			saveReviews(reviews);
 		}
 
@@ -161,7 +159,7 @@ public class SingleThreadCrawler
 			else
 			{
 				String sku = document.select("span[itemprop=sku]").first().text();
-				String reviewLink = "https://www.mpx.no/Review.aspx/AjaxList/" + sku + "/";
+				String reviewLink = "https://www." + type.getUrl() + "/Review.aspx/AjaxList/" + sku + "/";
 				logger.info("Sku {} has review link {}", sku, reviewLink);
 
 				return getAllReviews(reviewLink, "");
@@ -193,9 +191,9 @@ public class SingleThreadCrawler
 
 		Elements buttonElements = reviewContent.select("a[class=button]:containsOwn(>)");
 		if (buttonElements.size() > 0)
-		{			
+		{
 			reviews.addAll(getAllReviews(reviewBase, buttonElements.get(0).attr("href")));
-		}		
+		}
 
 		return reviews;
 	}
@@ -250,13 +248,13 @@ public class SingleThreadCrawler
 
 		return links;
 	}
-	
+
 	boolean shouldIgnoreLink(String link)
 	{
 		if (StringUtils.containsIgnoreCase(link, "/search"))
 			return true;
 		if (StringUtils.containsIgnoreCase(link, "/signin.aspx?"))
-			return true;		
+			return true;
 		if (StringUtils.containsIgnoreCase(link, "/feed.aspx?"))
 			return true;
 		if (StringUtils.containsIgnoreCase(link, "/aboutme.aspx?"))
@@ -271,7 +269,7 @@ public class SingleThreadCrawler
 			return true;
 		if (StringUtils.containsIgnoreCase(link, "action="))
 			return true;
-		
+
 		return false;
 	}
 

@@ -1,4 +1,4 @@
-package no.hioa.crawler.komplett;
+package no.hioa.crawler.product;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,25 +16,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Queue manager for komplett is very simple. It uses a FIFO ordering of queues and all new links are accepted as long as they are part of the komplett
- * domain.
+ * Queue manager for product review is very simple. It uses a FIFO ordering of queues and all new links are accepted as long as they are part of the
+ * product review domain.
  */
-public class KomplettQueueManager implements QueueManager
+public class ProductReviewQueueManager implements QueueManager
 {
 	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
 	private ConcurrentLinkedQueue<Link>	queue			= null;
 	private HashSet<Link>				knownLinks		= null;
+	private ProductReviewType			type			= null;
 
-	public KomplettQueueManager(List<Link> seeds)
+	public ProductReviewQueueManager(ProductReviewType type)
 	{
 		super();
 		queue = new ConcurrentLinkedQueue<>();
 		knownLinks = new HashSet<>();
+		this.type = type;
 
-		knownLinks.addAll(seeds);
-		queue.addAll(seeds);
+		knownLinks.addAll(Collections.singletonList(new Link(type.getUrl())));
+		queue.addAll(Collections.singletonList(new Link(type.getUrl())));
 	}
 
 	@Override
@@ -57,7 +59,7 @@ public class KomplettQueueManager implements QueueManager
 			for (Link link : result.get(page))
 			{
 				String domain = LinkUtil.normalizeDomain(link.getLink());
-				if ("mpx.no".equalsIgnoreCase(domain) && !knownLinks.contains(link))
+				if (type.getUrl().equalsIgnoreCase(domain) && !knownLinks.contains(link))
 				{
 					logger.info("Adding link {} to queue", link);
 					knownLinks.add(link);

@@ -1,6 +1,5 @@
-package no.hioa.crawler.komplett;
+package no.hioa.crawler.product;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -20,8 +19,7 @@ public class SingleThreadCrawlerTest
 	public void setup() throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		crawler = new SingleThreadCrawler(new KomplettQueueManager(Collections.singletonList(new Link("komplett.no"))), 
-				"target/komplett");
+		crawler = new SingleThreadCrawler(ProductReviewType.KOMPLETT);
 	}
 
 	@Test
