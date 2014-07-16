@@ -19,12 +19,12 @@ import org.slf4j.LoggerFactory;
  */
 public class DefaultQueueManager implements QueueManager
 {
-	private static final Logger logger = LoggerFactory.getLogger("fileLogger");
-	private static final Logger consoleLogger = LoggerFactory.getLogger("stdoutLogger");
+	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
+	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
-	private ConcurrentLinkedQueue<Link> queue = null;
-	private HashSet<Link> knownLinks = null;
-	private Link crawlDomain = null;
+	private ConcurrentLinkedQueue<Link>	queue			= null;
+	private HashSet<Link>				knownLinks		= null;
+	private Link						crawlDomain		= null;
 
 	/**
 	 * Constructor

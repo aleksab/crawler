@@ -9,12 +9,12 @@ import org.apache.commons.lang.builder.ToStringStyle;
  */
 public class Review
 {
-	private String link;
-	private int rating;
-	private String title;
-	private String content;
-	private String author;
-	private String date;
+	private String	link;
+	private int		rating;
+	private String	title;
+	private String	content;
+	private String	author;
+	private String	date;
 
 	public Review()
 	{

@@ -1,12 +1,12 @@
 package no.hioa.crawler.filmweb.parser;
 
-import no.hioa.crawler.filmweb.ReviewContentParser;
+import no.hioa.crawler.filmweb.ExternalContentParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-public class CineParser implements ReviewContentParser
+public class CineParser implements ExternalContentParser
 {		
 	public boolean canParseDomain(String domain)
 	{

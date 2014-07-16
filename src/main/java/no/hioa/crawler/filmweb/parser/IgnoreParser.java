@@ -1,8 +1,8 @@
 package no.hioa.crawler.filmweb.parser;
 
-import no.hioa.crawler.filmweb.ReviewContentParser;
+import no.hioa.crawler.filmweb.ExternalContentParser;
 
-public class IgnoreParser implements ReviewContentParser
+public class IgnoreParser implements ExternalContentParser
 {
 	public boolean canParseDomain(String domain)
 	{

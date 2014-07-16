@@ -3,7 +3,7 @@ package no.hioa.crawler.filmweb;
 /**
  * Parser for movie content.
  */
-public interface ReviewContentParser
+public interface ExternalContentParser
 {
 	/**
 	 * Can we parse this domain.

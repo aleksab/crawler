@@ -1,6 +1,5 @@
 package no.hioa.crawler.product;
 
-
 public enum ProductReviewType
 {
 	KOMPLETT("Komplett", "komplett.no"), MPX("Mpx", "mpx.no");

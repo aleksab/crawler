@@ -20,11 +20,11 @@ import org.slf4j.LoggerFactory;
 
 public class ProductReviewCrawler extends DefaultCrawler
 {
-	private static final Logger logger = LoggerFactory.getLogger("fileLogger");
-	private static final Logger consoleLogger = LoggerFactory.getLogger("stdoutLogger");
-	
-	private ProductReviewType type = null;
-	private DefaultReviewManager reviewManager = null;
+	private static final Logger		logger			= LoggerFactory.getLogger("fileLogger");
+	private static final Logger		consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
+
+	private ProductReviewType		type			= null;
+	private DefaultReviewManager	reviewManager	= null;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -43,8 +43,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the product view page and save review results to a file. The
-	 * crawler will not exit before all found links have been crawled.
+	 * Crawl the product view page and save review results to a file. The crawler will not exit before all found links have been crawled.
 	 */
 	public void crawlProductReviews()
 	{
@@ -91,7 +90,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 
 		return false;
 	}
-	
+
 	protected boolean shouldFollowDynamicLinks()
 	{
 		return true;
@@ -112,7 +111,8 @@ public class ProductReviewCrawler extends DefaultCrawler
 			{
 				logger.error("Could not get link to reviews");
 				return Collections.emptyList();
-			} else
+			}
+			else
 			{
 				String sku = document.select("span[itemprop=sku]").first().text();
 				String reviewLink = "https://www." + type.getUrl() + "/Review.aspx/AjaxList/" + sku + "/";
@@ -120,7 +120,8 @@ public class ProductReviewCrawler extends DefaultCrawler
 
 				return getAllReviews(reviewLink, "");
 			}
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.error("Unexpected error", ex);
 			return Collections.emptyList();
@@ -164,7 +165,8 @@ public class ProductReviewCrawler extends DefaultCrawler
 			int rating = Integer.valueOf(element.select("div[class=review-info] > div[class=score] > img").first().attr("alt"));
 
 			return new Review(link, rating, title, content, author, date);
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.error("Unexpected error when fetching review from " + link, ex);
 			return null;

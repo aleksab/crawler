@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "reviews")
 public class ReviewHeaderXML
 {
-	private List<Review> reviews;
+	private List<Review>	reviews;
 
 	public ReviewHeaderXML()
 	{

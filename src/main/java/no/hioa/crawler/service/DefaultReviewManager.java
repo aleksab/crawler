@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultReviewManager
 {
-	private static final Logger logger = LoggerFactory.getLogger("fileLogger");
+	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
 
-	private String reviewFolder = null;
+	private String				reviewFolder	= null;
 
 	public DefaultReviewManager(String reviewFolder)
 	{
@@ -38,7 +38,8 @@ public class DefaultReviewManager
 		try
 		{
 			FileUtils.forceMkdir(new File(reviewFolder));
-		} catch (IOException ex)
+		}
+		catch (IOException ex)
 		{
 			logger.error("Could not create folder " + reviewFolder, ex);
 		}
@@ -72,7 +73,8 @@ public class DefaultReviewManager
 			m.setProperty(Marshaller.JAXB_ENCODING, "Unicode");
 			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 			m.marshal(movieHeader, new FileOutputStream(xmlOutputFile));
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.error("Unknown error", ex);
 		}
@@ -102,7 +104,7 @@ public class DefaultReviewManager
 	{
 		Path newFile = Paths.get(reviewFolder, System.currentTimeMillis() + ".review");
 		logger.info("Saving review to file {}", newFile);
-		try (BufferedWriter writer = Files.newBufferedWriter(newFile, Charset.defaultCharset()))
+		try (BufferedWriter writer = Files.newBufferedWriter(newFile, Charset.forName("ISO-8859-1")))
 		{
 			writer.append("URL: " + review.getLink() + "\n");
 			writer.append("AUTHOR: " + review.getAuthor() + "\n");
@@ -110,7 +112,8 @@ public class DefaultReviewManager
 			writer.append("RATING: " + review.getRating() + "\n");
 			writer.append("TITLE: " + review.getTitle() + "\n");
 			writer.append(review.getContent());
-		} catch (IOException ex)
+		}
+		catch (IOException ex)
 		{
 			logger.error("Could not save review " + review + " to file " + newFile, ex);
 		}
@@ -165,7 +168,8 @@ public class DefaultReviewManager
 				// input = HtmlEscape.unescapeHtml(input);
 				buffer.append(input);
 			}
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.error("Could not read content for file " + file.getAbsolutePath(), ex);
 		}

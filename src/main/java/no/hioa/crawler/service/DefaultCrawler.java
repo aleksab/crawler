@@ -16,24 +16,23 @@ import org.slf4j.LoggerFactory;
 
 public abstract class DefaultCrawler
 {
-	private static final Logger logger = LoggerFactory.getLogger("fileLogger");
+	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
 
-	private static final String USER_AGENT = "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)";
-	private static final int PAGE_TIMEOUT = 1000 * 10;
+	private static final String	USER_AGENT		= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)";
+	private static final int	PAGE_TIMEOUT	= 1000 * 10;
 
-	private QueueManager qm;
+	private QueueManager		qm;
 
 	public DefaultCrawler(Link link)
 	{
 		super();
-		this.qm = new DefaultQueueManager(link, Collections.singletonList(new Link("http://www.filmweb.no/film/article1090008.ece")));
-		;
+		this.qm = new DefaultQueueManager(link, Collections.singletonList(link));;
 	}
 
 	protected abstract void crawlDocument(Document document);
 
 	protected abstract boolean shouldIgnoreLink(String link);
-	
+
 	protected abstract boolean shouldFollowDynamicLinks();
 
 	protected final void startCrawling()
@@ -60,7 +59,8 @@ public abstract class DefaultCrawler
 					Page page = new Page(link, result.content);
 					qm.updateQueue(Collections.singletonMap(page, result.links));
 				}
-			} catch (Exception ex)
+			}
+			catch (Exception ex)
 			{
 				logger.error("Could not crawl link " + link.getLink(), ex);
 			}
@@ -78,7 +78,8 @@ public abstract class DefaultCrawler
 			if (!StringUtils.startsWithIgnoreCase(properLink, "http://") && !StringUtils.startsWithIgnoreCase(properLink, "https://"))
 				properLink = "http://" + properLink;
 			return Jsoup.connect(properLink).timeout(PAGE_TIMEOUT).userAgent(USER_AGENT).followRedirects(true).get();
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.warn("Could not fetch content for link " + link.getLink(), ex);
 			return null;
@@ -96,7 +97,8 @@ public abstract class DefaultCrawler
 		try
 		{
 			crawlDocument(document);
-		} catch (Exception ex)
+		}
+		catch (Exception ex)
 		{
 			logger.error("Could not crawl document from link " + link.getLink(), ex);
 		}
@@ -118,7 +120,8 @@ public abstract class DefaultCrawler
 			long time = 1000 + (long) (Math.random() * 3000);
 			logger.info("Waiting for {} ms", time);
 			Thread.sleep(time);
-		} catch (InterruptedException ex)
+		}
+		catch (InterruptedException ex)
 		{
 			logger.error("Could not sleep", ex);
 		}
@@ -142,8 +145,8 @@ public abstract class DefaultCrawler
 
 	private class CrawlResult
 	{
-		public StringBuffer content;
-		public Set<Link> links;
+		public StringBuffer	content;
+		public Set<Link>	links;
 
 		public CrawlResult(StringBuffer content, Set<Link> links)
 		{

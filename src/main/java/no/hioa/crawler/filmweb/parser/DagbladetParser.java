@@ -1,12 +1,12 @@
 package no.hioa.crawler.filmweb.parser;
 
-import no.hioa.crawler.filmweb.ReviewContentParser;
+import no.hioa.crawler.filmweb.ExternalContentParser;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-public class DagbladetParser implements ReviewContentParser
+public class DagbladetParser implements ExternalContentParser
 {	
 	public boolean canParseDomain(String domain)
 	{
