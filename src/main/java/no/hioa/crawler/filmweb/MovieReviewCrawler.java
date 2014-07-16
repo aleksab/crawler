@@ -179,8 +179,10 @@ public class MovieReviewCrawler extends DefaultCrawler
 			{
 				if (crawler.hasParsedContent())
 					reviews.add(crawler.getReview());
-				else if (!crawler.shouldIgnore())
-					logger.warn("Could not get external content for " + crawler.getReview());
+				else if (crawler.shouldIgnore())
+					logger.warn("Link ignored " + crawler.getReview().getLink());
+				else
+					logger.warn("Could not get external content for " + crawler.getReview().getLink());
 			}
 
 			break;
