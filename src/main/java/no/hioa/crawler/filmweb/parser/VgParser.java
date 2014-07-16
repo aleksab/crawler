@@ -28,7 +28,7 @@ public class VgParser implements ExternalContentParser
 		for (int i = 0; i < (elements.size() - 1); i++)
 		{
 			Element element = elements.get(i);
-			buffer.append(element.text());
+			buffer.append(element.text() + " ");
 		}
 		
 		return buffer.toString();

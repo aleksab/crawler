@@ -31,7 +31,7 @@ public class Tv2Parser implements ExternalContentParser
 		for (int i = 4; i < elements.size(); i++)
 		{
 			Element element = elements.get(i);
-			buffer.append(element.text());
+			buffer.append(element.text() + " ");
 		}
 		
 		return buffer.toString();

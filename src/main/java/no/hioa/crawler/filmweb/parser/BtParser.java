@@ -27,7 +27,7 @@ public class BtParser implements ExternalContentParser
 		StringBuffer buffer = new StringBuffer();
 		for (Element element : elements)
 		{
-			buffer.append(element.text());
+			buffer.append(element.text() + " ");
 		}
 
 		return buffer.toString();
