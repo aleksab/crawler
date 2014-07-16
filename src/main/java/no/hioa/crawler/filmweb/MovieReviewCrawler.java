@@ -96,6 +96,10 @@ public class MovieReviewCrawler extends DefaultCrawler
 	{
 		if (StringUtils.containsIgnoreCase(link, "/rss/"))
 			return true;
+		if (StringUtils.containsIgnoreCase(link, ".pdf"))
+			return true;
+		if (StringUtils.containsIgnoreCase(link, ".jpg"))
+			return true;
 		
 		return false;
 	}
