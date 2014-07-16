@@ -22,6 +22,7 @@ public class ExternalReviewCrawler extends Thread
 	private String						content				= null;
 	private List<ExternalContentParser>	contentParsers		= null;
 	private boolean						hasParsedContent	= false;
+	private boolean						shouldIgnore		= false;
 
 	public ExternalReviewCrawler(Review review, List<ExternalContentParser> contentParsers)
 	{
@@ -46,6 +47,12 @@ public class ExternalReviewCrawler extends Thread
 			{
 				if (siteParser.canParseDomain(domain))
 				{
+					if (siteParser.shouldIgnore())
+					{
+						shouldIgnore = true;
+						break;
+					}
+
 					String extractedContent = siteParser.getContent(content);
 
 					// treat reviews less than 10 letters as empty
@@ -78,6 +85,11 @@ public class ExternalReviewCrawler extends Thread
 	public boolean hasParsedContent()
 	{
 		return hasParsedContent;
+	}
+
+	public boolean shouldIgnore()
+	{
+		return shouldIgnore;
 	}
 
 	private Document fetchContent(String link)
