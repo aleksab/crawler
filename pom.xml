@@ -60,7 +60,12 @@
 			<groupId>org.jsoup</groupId>
 			<artifactId>jsoup</artifactId>
 			<version>1.7.2</version>
-		</dependency>		
+		</dependency>
+		<dependency>
+			<groupId>org.unbescape</groupId>
+			<artifactId>unbescape</artifactId>
+			<version>1.0</version>
+		</dependency>
 	</dependencies>
 
 	<repositories>
