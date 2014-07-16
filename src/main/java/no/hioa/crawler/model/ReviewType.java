@@ -1,13 +1,13 @@
-package no.hioa.crawler.product;
+package no.hioa.crawler.model;
 
-public enum ProductReviewType
+public enum ReviewType
 {
-	KOMPLETT("Komplett", "komplett.no"), MPX("Mpx", "mpx.no");
+	FILMWEB("Filmweb", "filmweb.no"), KOMPLETT("Komplett", "komplett.no"), MPX("Mpx", "mpx.no");
 
 	private String	name;
 	private String	url;
 
-	ProductReviewType(String name, String url)
+	ReviewType(String name, String url)
 	{
 		this.name = name;
 		this.url = url;
@@ -39,11 +39,11 @@ public enum ProductReviewType
 		return this.getName();
 	}
 
-	public static ProductReviewType getEnum(String name)
+	public static ReviewType getEnum(String name)
 	{
-		for (ProductReviewType re : ProductReviewType.values())
+		for (ReviewType re : ReviewType.values())
 		{
-			if (re.name.compareTo(name) == 0 || re.url.compareTo(name) == 0)
+			if (re.name.equalsIgnoreCase(name) || re.url.equalsIgnoreCase(name))
 			{
 				return re;
 			}

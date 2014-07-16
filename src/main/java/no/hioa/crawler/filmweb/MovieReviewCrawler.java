@@ -17,6 +17,7 @@ import no.hioa.crawler.filmweb.parser.Tv2Parser;
 import no.hioa.crawler.filmweb.parser.VgParser;
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.model.Review;
+import no.hioa.crawler.model.ReviewType;
 import no.hioa.crawler.service.DefaultCrawler;
 import no.hioa.crawler.service.DefaultReviewManager;
 
@@ -35,8 +36,8 @@ public class MovieReviewCrawler extends DefaultCrawler
 
 	private static final int			TIMEOUT			= 1000 * 15;
 
-	private DefaultReviewManager		reviewManager	= new DefaultReviewManager("target/movie");
-	private List<ExternalContentParser>	contentParsers;
+	private DefaultReviewManager		reviewManager	= null;
+	private List<ExternalContentParser>	contentParsers	= null;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -48,8 +49,8 @@ public class MovieReviewCrawler extends DefaultCrawler
 
 	public MovieReviewCrawler()
 	{
-		super(new Link("filmweb.no"));
-		this.reviewManager = new DefaultReviewManager("target/movie");
+		super(new Link(ReviewType.FILMWEB.getUrl()));
+		this.reviewManager = new DefaultReviewManager("target/" + ReviewType.FILMWEB.getName().toLowerCase());
 
 		contentParsers = new LinkedList<>();
 		contentParsers.add(new DagbladetParser());
@@ -71,11 +72,11 @@ public class MovieReviewCrawler extends DefaultCrawler
 	 */
 	public void crawlMovieReviews()
 	{
-		consoleLogger.info("Starting to crawl filmweb.no");
+		consoleLogger.info("Starting to crawl " + ReviewType.FILMWEB.getUrl());
 
 		startCrawling();
 
-		String output = "target/movie-reviews.xml";
+		String output = "target/" + ReviewType.FILMWEB.getName().toLowerCase() + "-reviews.xml";
 		consoleLogger.info("Crawler completed, saving to file {}", output);
 
 		reviewManager.generateXml(output);
@@ -110,6 +111,7 @@ public class MovieReviewCrawler extends DefaultCrawler
 	@SuppressWarnings("deprecation")
 	List<Review> getReviews(Document doc)
 	{
+		List<Review> externalReviews = new LinkedList<>();
 		List<Review> reviews = new LinkedList<>();
 
 		String title = doc.select("div.view_omtale > div > div.info > h1").first().text();
@@ -121,11 +123,11 @@ public class MovieReviewCrawler extends DefaultCrawler
 				String externalLink = element.select("div.text > a").first().attr("href");
 				String ratingText = element.select("div.rating").first().attr("alt");
 				String author = element.select("div.text > a").first().attr("alt");
-				String date = "unknown";
+				String date = "";
 
 				ratingText = StringUtils.substringAfterLast(ratingText, " ");
 				int rating = Integer.valueOf(ratingText);
-				reviews.add(new Review(externalLink, rating, title, "", author, date));
+				externalReviews.add(new Review(externalLink, rating, title, "", author, date, ReviewType.FILMWEB));
 			}
 			catch (Exception ex)
 			{
@@ -135,7 +137,7 @@ public class MovieReviewCrawler extends DefaultCrawler
 
 		// start a crawling thread per external review
 		List<ExternalReviewCrawler> crawlers = new LinkedList<>();
-		for (Review review : reviews)
+		for (Review review : externalReviews)
 		{
 			ExternalReviewCrawler crawler = new ExternalReviewCrawler(review, contentParsers);
 			crawler.start();
@@ -177,6 +179,8 @@ public class MovieReviewCrawler extends DefaultCrawler
 			{
 				if (crawler.hasParsedContent())
 					reviews.add(crawler.getReview());
+				else
+					logger.warn("Could not get external content for " + crawler.getReview());
 			}
 
 			break;

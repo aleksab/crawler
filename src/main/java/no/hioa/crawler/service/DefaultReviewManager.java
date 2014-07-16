@@ -1,14 +1,10 @@
 package no.hioa.crawler.service;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -16,8 +12,10 @@ import java.util.Scanner;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 
+
 import no.hioa.crawler.model.Review;
 import no.hioa.crawler.model.ReviewHeaderXML;
+import no.hioa.crawler.model.ReviewType;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -36,7 +34,7 @@ public class DefaultReviewManager
 		this.reviewFolder = reviewFolder;
 
 		try
-		{
+		{			
 			FileUtils.forceMkdir(new File(reviewFolder));
 		}
 		catch (IOException ex)
@@ -68,7 +66,7 @@ public class DefaultReviewManager
 
 		try
 		{
-			JAXBContext context = JAXBContext.newInstance(Review.class);
+			JAXBContext context = JAXBContext.newInstance(Review.class, ReviewHeaderXML.class);
 			Marshaller m = context.createMarshaller();
 			m.setProperty(Marshaller.JAXB_ENCODING, "Unicode");
 			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -102,15 +100,16 @@ public class DefaultReviewManager
 	 */
 	public void saveReview(Review review)
 	{
-		Path newFile = Paths.get(reviewFolder, System.currentTimeMillis() + ".review");
+		File newFile = new File(reviewFolder + "/" + System.currentTimeMillis() + ".review");
 		logger.info("Saving review to file {}", newFile);
-		try (BufferedWriter writer = Files.newBufferedWriter(newFile, Charset.forName("ISO-8859-1")))
+		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
 		{
-			writer.append("URL: " + review.getLink() + "\n");
+			writer.write("URL: " + review.getLink() + "\n");
 			writer.append("AUTHOR: " + review.getAuthor() + "\n");
 			writer.append("DATE: " + review.getDate() + "\n");
 			writer.append("RATING: " + review.getRating() + "\n");
 			writer.append("TITLE: " + review.getTitle() + "\n");
+			writer.append("TYPE: " + review.getType() + "\n");
 			writer.append(review.getContent());
 		}
 		catch (IOException ex)
@@ -132,6 +131,7 @@ public class DefaultReviewManager
 		String date = null;
 		int rating = 0;
 		String title = null;
+		ReviewType type = null;
 		StringBuffer buffer = new StringBuffer();
 
 		try (Scanner scanner = new Scanner(new FileInputStream(file), "ISO-8859-1"))
@@ -160,6 +160,11 @@ public class DefaultReviewManager
 			{
 				title = StringUtils.substringAfter(scanner.nextLine(), "TITLE: ").trim();
 			}
+			
+			if (scanner.hasNextLine())
+			{
+				type = ReviewType.getEnum(StringUtils.substringAfter(scanner.nextLine(), "TYPE: ").trim());
+			}
 
 			while (scanner.hasNextLine())
 			{
@@ -174,6 +179,6 @@ public class DefaultReviewManager
 			logger.error("Could not read content for file " + file.getAbsolutePath(), ex);
 		}
 
-		return new Review(link, rating, title, buffer.toString(), author, date);
+		return new Review(link, rating, title, buffer.toString(), author, date, type);
 	}
 }

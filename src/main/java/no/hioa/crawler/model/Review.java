@@ -9,19 +9,20 @@ import org.apache.commons.lang.builder.ToStringStyle;
  */
 public class Review
 {
-	private String	link;
-	private int		rating;
-	private String	title;
-	private String	content;
-	private String	author;
-	private String	date;
+	private String		link;
+	private int			rating;
+	private String		title;
+	private String		content;
+	private String		author;
+	private String		date;
+	private ReviewType	type;
 
 	public Review()
 	{
 
 	}
 
-	public Review(String link, int rating, String title, String content, String author, String date)
+	public Review(String link, int rating, String title, String content, String author, String date, ReviewType type)
 	{
 		super();
 		this.link = link;
@@ -30,6 +31,17 @@ public class Review
 		this.content = content;
 		this.author = author;
 		this.date = date;
+		this.type = type;
+	}
+
+	public ReviewType getType()
+	{
+		return type;
+	}
+
+	public void setType(ReviewType type)
+	{
+		this.type = type;
 	}
 
 	public String getLink()

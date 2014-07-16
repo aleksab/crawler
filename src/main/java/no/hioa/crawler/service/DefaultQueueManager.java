@@ -60,10 +60,16 @@ public class DefaultQueueManager implements QueueManager
 	@Override
 	public void updateQueue(Map<Page, Set<Link>> result)
 	{
+		if (knownLinks.size() >= 30)
+			return;
+		
 		for (Page page : result.keySet())
 		{
 			for (Link link : result.get(page))
 			{
+				if (knownLinks.size() >= 30)
+					return;
+				
 				String domain = LinkUtil.normalizeDomain(link.getLink());
 				if (crawlDomain.getLink().equalsIgnoreCase(domain) && !knownLinks.contains(link))
 				{

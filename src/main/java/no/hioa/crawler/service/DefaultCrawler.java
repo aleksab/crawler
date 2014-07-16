@@ -19,7 +19,7 @@ public abstract class DefaultCrawler
 	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
 
 	private static final String	USER_AGENT		= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)";
-	private static final int	PAGE_TIMEOUT	= 1000 * 10;
+	private static final int	PAGE_TIMEOUT	= 1000 * 15;
 
 	private QueueManager		qm;
 
@@ -45,8 +45,7 @@ public abstract class DefaultCrawler
 		while (link != null)
 		{
 			logger.info("Got link {} from QM", link.getLink());
-
-			beNice();
+			long startTime = System.currentTimeMillis();
 
 			try
 			{
@@ -67,6 +66,8 @@ public abstract class DefaultCrawler
 
 			// get next link
 			link = qm.getNextLink();
+
+			beNice(startTime);
 		}
 	}
 
@@ -110,16 +111,22 @@ public abstract class DefaultCrawler
 		return new CrawlResult(content, links);
 	}
 
-	// TODO: this can be smarter. subtract time used in case of timeout from
-	// pages etc
-	void beNice()
+	void beNice(long startTime)
 	{
 		try
 		{
+			long elapsedTime = System.currentTimeMillis() - startTime;
+
 			// sleep a random time between 1 and 4 seconds
-			long time = 1000 + (long) (Math.random() * 3000);
-			logger.info("Waiting for {} ms", time);
-			Thread.sleep(time);
+			long time = 1000 + (long) (Math.random() * 3000) - elapsedTime;
+
+			if (time > 0)
+			{
+				logger.info("Waiting for {} ms", time);
+				Thread.sleep(time);
+			}
+			else
+				logger.info("No need to wait since elapsedTime was over limit");
 		}
 		catch (InterruptedException ex)
 		{
@@ -133,10 +140,9 @@ public abstract class DefaultCrawler
 		for (Element element : doc.select("a[href]"))
 		{
 			String link = element.attr("abs:href");
-			if (link != null)
+			if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
 			{
-				if (!shouldIgnoreLink(link))
-					links.add(new Link(link, !shouldFollowDynamicLinks()));
+				links.add(new Link(link, !shouldFollowDynamicLinks()));
 			}
 		}
 

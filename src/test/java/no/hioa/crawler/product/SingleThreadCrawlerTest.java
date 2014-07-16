@@ -3,6 +3,7 @@ package no.hioa.crawler.product;
 import java.util.List;
 
 import no.hioa.crawler.model.Link;
+import no.hioa.crawler.model.ReviewType;
 import no.hioa.crawler.model.Review;
 
 import org.apache.log4j.PropertyConfigurator;
@@ -19,7 +20,7 @@ public class SingleThreadCrawlerTest
 	public void setup() throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		crawler = new ProductReviewCrawler(ProductReviewType.KOMPLETT);
+		crawler = new ProductReviewCrawler(ReviewType.KOMPLETT);
 	}
 
 	@Test

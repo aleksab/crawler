@@ -16,7 +16,7 @@ public class ExternalReviewCrawler extends Thread
 	private static final Logger			logger				= LoggerFactory.getLogger("fileLogger");
 
 	private static final String			USER_AGENT			= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)";
-	private static final int			PAGE_TIMEOUT		= 1000 * 10;
+	private static final int			PAGE_TIMEOUT		= 1000 * 30;
 
 	private Review						review				= null;
 	private String						content				= null;

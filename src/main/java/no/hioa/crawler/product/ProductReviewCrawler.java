@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import no.hioa.crawler.model.Link;
+import no.hioa.crawler.model.ReviewType;
 import no.hioa.crawler.model.Review;
 import no.hioa.crawler.service.DefaultCrawler;
 import no.hioa.crawler.service.DefaultReviewManager;
@@ -23,23 +24,23 @@ public class ProductReviewCrawler extends DefaultCrawler
 	private static final Logger		logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger		consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
-	private ProductReviewType		type			= null;
+	private ReviewType				type			= null;
 	private DefaultReviewManager	reviewManager	= null;
 
 	public static void main(String[] args) throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
 
-		ProductReviewCrawler crawler = new ProductReviewCrawler(ProductReviewType.getEnum(args[0]));
+		ProductReviewCrawler crawler = new ProductReviewCrawler(ReviewType.getEnum(args[0]));
 		crawler.crawlProductReviews();
 	}
 
-	public ProductReviewCrawler(ProductReviewType type) throws IOException
+	public ProductReviewCrawler(ReviewType type) throws IOException
 	{
 		super(new Link(type.getUrl()));
 
 		this.type = type;
-		this.reviewManager = new DefaultReviewManager("target/product");
+		this.reviewManager = new DefaultReviewManager("target/" + type.getName().toLowerCase());
 	}
 
 	/**
@@ -51,7 +52,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 
 		startCrawling();
 
-		String output = "target/product-reviews.xml";
+		String output = "target/" + type.getName().toLowerCase() + "-reviews.xml";
 		consoleLogger.info("Crawler completed, saving to file {}", output);
 
 		reviewManager.generateXml(output);
@@ -164,7 +165,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 			String date = element.select("div[class=review-info] > div[class=date]").first().text();
 			int rating = Integer.valueOf(element.select("div[class=review-info] > div[class=score] > img").first().attr("alt"));
 
-			return new Review(link, rating, title, content, author, date);
+			return new Review(link, rating, title, content, author, date, type);
 		}
 		catch (Exception ex)
 		{
