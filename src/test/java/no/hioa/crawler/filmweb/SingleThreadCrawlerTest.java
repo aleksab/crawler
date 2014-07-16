@@ -1,11 +1,6 @@
 package no.hioa.crawler.filmweb;
 
-import java.util.Collections;
-
-import no.hioa.crawler.filmweb.FilmwebQueueManager;
-import no.hioa.crawler.filmweb.SingleThreadCrawler;
 import no.hioa.crawler.model.Link;
-import no.hioa.crawler.service.FileContentManager;
 
 import org.apache.log4j.PropertyConfigurator;
 import org.jsoup.nodes.Document;
@@ -15,13 +10,13 @@ import org.junit.Test;
 
 public class SingleThreadCrawlerTest
 {
-	private SingleThreadCrawler	crawler	= null;
+	private MovieReviewCrawler crawler = null;
 
 	@Before
 	public void setup() throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		crawler = new SingleThreadCrawler(new FilmwebQueueManager(Collections.singletonList(new Link("filmweb.no"))), new FileContentManager("target/data"));
+		crawler = new MovieReviewCrawler();
 	}
 
 	@Test

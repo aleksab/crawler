@@ -1,4 +1,4 @@
-package no.hioa.crawler.product;
+package no.hioa.crawler.model;
 
 import java.util.List;
 
@@ -6,30 +6,29 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "reviews")
-public class ReviewHeader
+public class ReviewHeaderXML
 {
-	private List<ProductReview> reviews;
+	private List<Review> reviews;
 
-	public ReviewHeader()
+	public ReviewHeaderXML()
 	{
 
 	}
 
-	public ReviewHeader(List<ProductReview> reviews)
+	public ReviewHeaderXML(List<Review> reviews)
 	{
 		super();
 		this.reviews = reviews;
 	}
 
 	@XmlElement(name = "review")
-	public List<ProductReview> getProductReview()
+	public List<Review> getReviews()
 	{
 		return reviews;
 	}
 
-	public void setProductReview(List<ProductReview> reviews)
+	public void setReviews(List<Review> reviews)
 	{
 		this.reviews = reviews;
 	}
-
 }

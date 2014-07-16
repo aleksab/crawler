@@ -1,34 +1,35 @@
-package no.hioa.crawler.product;
-
-import java.util.Date;
+package no.hioa.crawler.model;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
+/**
+ * Model for a review, both movie review and product review.
+ */
 public class Review
 {
-	private String	link;
-	private int		rating;
-	private String	title;
-	private String	content;
-	private Date	date;
-	private String	name;
+	private String link;
+	private int rating;
+	private String title;
+	private String content;
+	private String author;
+	private String date;
 
 	public Review()
 	{
 
 	}
 
-	public Review(String link, int rating, String title, String content, Date date, String name)
+	public Review(String link, int rating, String title, String content, String author, String date)
 	{
 		super();
 		this.link = link;
 		this.rating = rating;
 		this.title = title;
 		this.content = content;
+		this.author = author;
 		this.date = date;
-		this.name = name;
 	}
 
 	public String getLink()
@@ -71,24 +72,24 @@ public class Review
 		this.content = content;
 	}
 
-	public Date getDate()
+	public String getAuthor()
+	{
+		return author;
+	}
+
+	public void setAuthor(String author)
+	{
+		this.author = author;
+	}
+
+	public String getDate()
 	{
 		return date;
 	}
 
-	public void setDate(Date date)
+	public void setDate(String date)
 	{
 		this.date = date;
-	}
-
-	public String getName()
-	{
-		return name;
-	}
-
-	public void setName(String name)
-	{
-		this.name = name;
 	}
 
 	@Override

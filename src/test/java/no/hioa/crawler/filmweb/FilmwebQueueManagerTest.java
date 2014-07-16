@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import no.hioa.crawler.filmweb.FilmwebQueueManager;
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.model.Page;
+import no.hioa.crawler.service.DefaultQueueManager;
+import no.hioa.crawler.service.QueueManager;
 
 import org.apache.log4j.PropertyConfigurator;
 import org.junit.Assert;
@@ -18,8 +19,8 @@ import org.junit.Test;
 
 public class FilmwebQueueManagerTest
 {
-	private FilmwebQueueManager	qm		= null;
-	private List<Link>			seeds	= null;
+	private QueueManager qm = null;
+	private List<Link> seeds = null;
 
 	@Before
 	public void setup() throws Exception
@@ -30,7 +31,7 @@ public class FilmwebQueueManagerTest
 		seeds.add(new Link("filmweb.no"));
 		seeds.add(new Link("filmweb.no/test"));
 
-		qm = new FilmwebQueueManager(seeds);
+		qm = new DefaultQueueManager(new Link("filmweb.no"), seeds);
 	}
 
 	@Test
