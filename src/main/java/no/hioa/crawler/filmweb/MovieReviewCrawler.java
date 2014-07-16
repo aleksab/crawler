@@ -94,6 +94,9 @@ public class MovieReviewCrawler extends DefaultCrawler
 
 	protected boolean shouldIgnoreLink(String link)
 	{
+		if (StringUtils.containsIgnoreCase(link, "/rss/"))
+			return true;
+		
 		return false;
 	}
 

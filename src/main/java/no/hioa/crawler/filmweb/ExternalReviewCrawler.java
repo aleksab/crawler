@@ -19,7 +19,6 @@ public class ExternalReviewCrawler extends Thread
 	private static final int			PAGE_TIMEOUT		= 1000 * 30;
 
 	private Review						review				= null;
-	private String						content				= null;
 	private List<ExternalContentParser>	contentParsers		= null;
 	private boolean						hasParsedContent	= false;
 	private boolean						shouldIgnore		= false;
@@ -34,26 +33,24 @@ public class ExternalReviewCrawler extends Thread
 	@Override
 	public void run()
 	{
-		Document document = fetchContent(review.getLink());
-		if (document != null)
+		String domain = LinkUtil.normalizeDomain(review.getLink());
+
+		// see if we can extract the content with one of our parsers
+		for (ExternalContentParser siteParser : contentParsers)
 		{
-			logger.info("Got content for {}", review.getLink());
-			content = document.html();
-
-			String domain = LinkUtil.normalizeDomain(review.getLink());
-
-			// see if we can extract the content with one of our parsers
-			for (ExternalContentParser siteParser : contentParsers)
+			if (siteParser.canParseDomain(domain))
 			{
-				if (siteParser.canParseDomain(domain))
+				if (siteParser.shouldIgnore())
 				{
-					if (siteParser.shouldIgnore())
-					{
-						shouldIgnore = true;
-						break;
-					}
+					shouldIgnore = true;
+					break;
+				}
 
-					String extractedContent = siteParser.getContent(content);
+				Document document = fetchContent(review.getLink());
+				if (document != null)
+				{
+					logger.info("Got content for {}", review.getLink());
+					String extractedContent = siteParser.getContent(document.html());
 
 					// treat reviews less than 10 letters as empty
 					if (extractedContent == null || extractedContent.trim().length() < 10)
@@ -65,21 +62,17 @@ public class ExternalReviewCrawler extends Thread
 						hasParsedContent = true;
 						break;
 					}
+
 				}
+				else
+					logger.warn("Could not get content for {}", review.getLink());
 			}
 		}
-		else
-			logger.warn("Could not get content for {}", review.getLink());
 	}
 
 	public Review getReview()
 	{
 		return review;
-	}
-
-	public String getContent()
-	{
-		return content;
 	}
 
 	public boolean hasParsedContent()
@@ -96,10 +89,11 @@ public class ExternalReviewCrawler extends Thread
 	{
 		try
 		{
-			if (!StringUtils.startsWith(link, "http://"))
-				link = "http://" + link;
+			String properLink = link;
+			if (!StringUtils.startsWithIgnoreCase(properLink, "http://") && !StringUtils.startsWithIgnoreCase(properLink, "https://"))
+				properLink = "http://" + properLink;
 
-			return Jsoup.connect(link).timeout(PAGE_TIMEOUT).userAgent(USER_AGENT).followRedirects(true).get();
+			return Jsoup.connect(properLink).timeout(PAGE_TIMEOUT).userAgent(USER_AGENT).followRedirects(true).get();
 		}
 		catch (Exception ex)
 		{
