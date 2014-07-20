@@ -44,7 +44,7 @@ public class MovieReviewCrawler extends DefaultCrawler
 		PropertyConfigurator.configure("log4j.properties");
 
 		MovieReviewCrawler crawler = new MovieReviewCrawler();
-		crawler.crawlMovieReviews();
+		crawler.generateReviewResults();
 	}
 
 	public MovieReviewCrawler()
@@ -67,6 +67,13 @@ public class MovieReviewCrawler extends DefaultCrawler
 		contentParsers.add(new NrkParser());
 	}
 
+	public void generateReviewResults()
+	{
+		String output = "target/" + ReviewType.FILMWEB.getName().toLowerCase() + "-reviews.xml";
+		consoleLogger.info("Crawler completed, saving to file {}", output);
+
+		reviewManager.generateXml(output);
+	}
 	/**
 	 * Crawl the filmweb and save review results to a file. The crawler will not exit before all found links have been crawled.
 	 */
