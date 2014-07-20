@@ -32,7 +32,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 		PropertyConfigurator.configure("log4j.properties");
 
 		ProductReviewCrawler crawler = new ProductReviewCrawler(ReviewType.getEnum(args[0]));
-		crawler.crawlProductReviews();
+		crawler.generateReviewResults();
 	}
 
 	public ProductReviewCrawler(ReviewType type) throws IOException
@@ -43,6 +43,14 @@ public class ProductReviewCrawler extends DefaultCrawler
 		this.reviewManager = new DefaultReviewManager("target/" + type.getName().toLowerCase());
 	}
 
+	public void generateReviewResults()
+	{
+		String output = "target/" + type.getName().toLowerCase() + "-reviews.xml";
+		consoleLogger.info("Crawler completed, saving to file {}", output);
+
+		reviewManager.generateXml(output);
+	}
+	
 	/**
 	 * Crawl the product view page and save review results to a file. The crawler will not exit before all found links have been crawled.
 	 */

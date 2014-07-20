@@ -74,6 +74,7 @@ public class MovieReviewCrawler extends DefaultCrawler
 
 		reviewManager.generateXml(output);
 	}
+		
 	/**
 	 * Crawl the filmweb and save review results to a file. The crawler will not exit before all found links have been crawled.
 	 */

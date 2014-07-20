@@ -67,8 +67,7 @@ public class DefaultReviewManager
 		try
 		{
 			JAXBContext context = JAXBContext.newInstance(Review.class, ReviewHeaderXML.class);
-			Marshaller m = context.createMarshaller();
-			m.setProperty(Marshaller.JAXB_ENCODING, "Unicode");
+			Marshaller m = context.createMarshaller();			
 			m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 			m.marshal(movieHeader, new FileOutputStream(xmlOutputFile));
 		}
