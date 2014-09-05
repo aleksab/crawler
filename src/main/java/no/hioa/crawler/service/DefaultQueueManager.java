@@ -59,11 +59,11 @@ public class DefaultQueueManager implements QueueManager
 
 	@Override
 	public void updateQueue(Map<Page, Set<Link>> result)
-	{		
+	{
 		for (Page page : result.keySet())
 		{
 			for (Link link : result.get(page))
-			{				
+			{
 				String domain = LinkUtil.normalizeDomain(link.getLink());
 				if (crawlDomain.getLink().equalsIgnoreCase(domain) && !knownLinks.contains(link))
 				{
@@ -74,7 +74,7 @@ public class DefaultQueueManager implements QueueManager
 			}
 		}
 
-		logger.info("Queue size: {}, knownLinks: {}", queue.size(), knownLinks.size());
-		consoleLogger.info("Queue size: {}, knownLinks: {}", queue.size(), knownLinks.size());
+		logger.info("Queue size ({}): {}, knownLinks: {}", crawlDomain.getLink(), queue.size(), knownLinks.size());
+		consoleLogger.info("Queue size ({}): {}, knownLinks: {}", crawlDomain.getLink(), queue.size(), knownLinks.size());
 	}
 }
