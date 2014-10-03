@@ -26,7 +26,17 @@ public abstract class DefaultCrawler
 	public DefaultCrawler(Link link)
 	{
 		super();
-		this.qm = new DefaultQueueManager(link, Collections.singletonList(link));;
+		this.qm = new DefaultQueueManager(link, Collections.singletonList(link));
+	}
+
+	public DefaultCrawler()
+	{
+		super();
+	}
+
+	public void setDomain(Link link)
+	{
+		this.qm = new DefaultQueueManager(link, Collections.singletonList(link));
 	}
 
 	protected abstract void crawlDocument(Document document);
