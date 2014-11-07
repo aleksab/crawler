@@ -24,55 +24,58 @@ public class ExtractTextContent
 {
 	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
-	private List<String> stopWords = null;
+	private List<String>		stopWords		= null;
+
 	public static void main(String[] args) throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
 		ExtractTextContent extractor = new ExtractTextContent();
 
-		// String content = extractor.extractTextContent(new File(
-		// "C:/Users/Alex/Desktop/blogs/blogs~/target/0sloasthattumblrcom/0sloasthat_1412332351502"));
-		// consoleLogger.info(content);
-
-		extractor.extractFolders(new File("C:/Users/Alex/Desktop/blogs/blogs~/target/"));
-		
-		//System.out.println(StandardAnalyzer.STOP_WORDS_SET.toString());
+		extractor.extractFolders(new File("C:/data/crawl"), new File("C:/data/text"));
 	}
-	
+
 	public ExtractTextContent()
 	{
 		stopWords = getStopWords();
 	}
 
-	public void extractFolders(File folderPath)
-	{		
+	public void extractFolders(File folderPath, File outputPath)
+	{
 		for (File folder : folderPath.listFiles())
 		{
 			if (folder.isDirectory())
 			{
-				StringBuffer buffer = extractFolderContent(folder);
-				consoleLogger.info("Folder {} has {} lines (size: {})", folder.getName(), StringUtils.countMatches(buffer.toString(), "\n"),
-						buffer.length());
-				saveResult(new File(folderPath + "/" + folder.getName() + ".txt"), buffer);
+				consoleLogger.info("Extracting text from folder {}", folder.getName());
+
+				try
+				{
+					File outputFolder = new File(outputPath + "/" + folder.getName());
+					FileUtils.forceMkdir(outputFolder);
+					extractFolderContent(folder, outputFolder);
+				}
+				catch (IOException ex)
+				{
+					consoleLogger.error("Could not save content for folder", ex);
+				}
 			}
 		}
 	}
 
-	public StringBuffer extractFolderContent(File folder)
+	public boolean extractFolderContent(File folder, File outputFolder)
 	{
-		StringBuffer buffer = new StringBuffer();
-
 		for (File file : folder.listFiles())
 		{
 			if (file.isFile())
 			{
 				String content = extractTextContent(file);
 				if (content != null && !StringUtils.isEmpty(content))
-					buffer.append(content);
+				{
+					saveResult(new File(outputFolder + "/" + System.currentTimeMillis() + ".txt"), content);
+				}
 			}
 		}
 
-		return buffer;
+		return true;
 	}
 
 	public String extractTextContent(File htmlFile)
@@ -101,7 +104,8 @@ public class ExtractTextContent
 					while (words.hasMoreTokens())
 					{
 						if (stopWords.contains(words.nextToken()))
-						//if (StandardAnalyzer.STOP_WORDS_SET.contains(words.nextToken()))
+						// if
+						// (StandardAnalyzer.STOP_WORDS_SET.contains(words.nextToken()))
 						{
 							found = true;
 							break;
@@ -125,24 +129,24 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-	
+
 	private List<String> getStopWords()
 	{
 		return getFileContent(new File("src/main/resources/no/hioa/crawler/parser/stop-words-english.txt"));
 	}
-	
-	private void saveResult(File file, StringBuffer buffer)
+
+	private void saveResult(File file, String buffer)
 	{
 		try (PrintWriter writer = new PrintWriter(file, "ISO-8859-1"))
-		{			
+		{
 			writer.write(buffer.toString());
 		}
 		catch (IOException ex)
 		{
-			consoleLogger.error("Could not save links to file " + file, ex);
+			consoleLogger.error("Could not save content to file " + file, ex);
 		}
 	}
-	
+
 	private List<String> getFileContent(File file)
 	{
 		List<String> words = new LinkedList<>();
