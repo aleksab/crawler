@@ -80,7 +80,7 @@ public class LinkUtil
 		}
 		catch (Exception ex)
 		{
-			logger.error("Unknown error", ex);
+			logger.error("Illegal link: {}", link);
 			throw new IllegalArgumentException("Illegal link");
 		}
 	}

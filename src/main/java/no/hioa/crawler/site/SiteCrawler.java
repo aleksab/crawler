@@ -39,7 +39,11 @@ public class SiteCrawler extends DefaultCrawler
 	@Parameter(names = "-output", description = "Where to store pages", required = false)
 	private String				folder			= "target/";
 
+	@Parameter(names = "-maxSize", description = "Max size of files", required = false)
+	private double				maxSizeMb		= 10 * 1024 * 2014;
+
 	private String				outputFolder	= null;
+	private boolean				shouldAbort		= false;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -93,16 +97,28 @@ public class SiteCrawler extends DefaultCrawler
 
 		for (Link link : links)
 		{
-			Link domain = new Link(LinkUtil.normalizeDomain(link.getLink()));
-			if (!site.getLink().equalsIgnoreCase(domain.getLink()) && !externalLinks.contains(domain))
+			try
 			{
-				externalLinks.add(domain);
+				Link domain = new Link(LinkUtil.normalizeDomain(link.getLink()));
+				if (!site.getLink().equalsIgnoreCase(domain.getLink()) && !externalLinks.contains(domain))
+				{
+					externalLinks.add(domain);
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.warn("Could not check if link belongs to domain: {}", link.getLink());
 			}
 		}
 
 		if (shouldSavePages)
 		{
 			savePage(document);
+		}
+
+		if (hasReachMaxSize())
+		{
+			shouldAbort = true;
 		}
 	}
 
@@ -114,6 +130,11 @@ public class SiteCrawler extends DefaultCrawler
 	protected boolean shouldFollowDynamicLinks()
 	{
 		return true;
+	}
+
+	protected boolean shouldAbort()
+	{
+		return shouldAbort;
 	}
 
 	void saveStats()
@@ -146,17 +167,29 @@ public class SiteCrawler extends DefaultCrawler
 		}
 	}
 
-	private void savePage(Document document)
+	void savePage(Document document)
 	{
 		try
 		{
-			String file = outputFolder + "/" + removeNoneAlphaNumeric(document.title()) + "_" + System.currentTimeMillis();
+			String file = outputFolder + "/" + System.currentTimeMillis() + ".html";
 			FileUtils.writeStringToFile(new File(file), document.html(), "UTF-8");
 		}
 		catch (IOException ex)
 		{
 			logger.error("Could not save page", ex);
 		}
+	}
+
+	boolean hasReachMaxSize()
+	{
+		double sizeFolder = (double) FileUtils.sizeOfDirectory(new File(outputFolder)) / (1024d * 1024d);
+		if (sizeFolder >= maxSizeMb)
+		{
+			logger.warn("Size of folder with pages has reached limit: {}", sizeFolder);
+			return true;
+		}
+		else
+			return false;
 	}
 
 	private String removeNoneAlphaNumeric(String input)

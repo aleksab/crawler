@@ -54,6 +54,12 @@ public abstract class DefaultCrawler
 
 		while (link != null)
 		{
+			if (shouldAbort())
+			{
+				logger.info("Aborting crawling of site");
+				break;
+			}
+
 			logger.info("Got link {} from QM", link.getLink());
 			long startTime = System.currentTimeMillis();
 
@@ -95,6 +101,11 @@ public abstract class DefaultCrawler
 			logger.warn("Could not fetch content for link " + link.getLink(), ex);
 			return null;
 		}
+	}
+
+	protected boolean shouldAbort()
+	{
+		return false;
 	}
 
 	CrawlResult crawlLink(Link link)
