@@ -75,7 +75,8 @@ public class SiteCrawler extends DefaultCrawler
 
 		if (!StringUtils.isEmpty(ignore))
 		{
-			for (String ignore : ignore.split(","))
+			String[] splits = ignore.split(",");
+			for (String ignore : splits)
 			{
 				ignoreList.add(StringUtils.trim(ignore));
 			}
