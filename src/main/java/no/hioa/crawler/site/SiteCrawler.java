@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import no.hioa.crawler.model.Link;
@@ -42,8 +44,12 @@ public class SiteCrawler extends DefaultCrawler
 	@Parameter(names = "-maxSize", description = "Max size of files", required = false)
 	private double				maxSizeMb		= 10 * 1024 * 2014;
 
+	@Parameter(names = "-ignoreLinks", description = "Which links to ignore (comma seperated)", required = false)
+	private String				ignore			= "";
+
 	private String				outputFolder	= null;
 	private boolean				shouldAbort		= false;
+	private List<String>		ignoreList		= null;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -63,6 +69,17 @@ public class SiteCrawler extends DefaultCrawler
 		{
 			outputFolder = folder + "/" + removeNoneAlphaNumeric(site.getLink());
 			FileUtils.forceMkdir(new File(outputFolder));
+		}
+
+		ignoreList = new LinkedList<>();
+
+		if (!StringUtils.isEmpty(ignore))
+		{
+			for (String ignore : ignore.split(","))
+			{
+				ignoreList.add(StringUtils.trim(ignore));
+			}
+			logger.info("Ignore list: " + ignoreList);
 		}
 	}
 
@@ -124,6 +141,12 @@ public class SiteCrawler extends DefaultCrawler
 
 	protected boolean shouldIgnoreLink(String link)
 	{
+		for (String ignore : ignoreList)
+		{
+			if (StringUtils.containsIgnoreCase(link, ignore))
+				return true;
+		}
+
 		return false;
 	}
 
