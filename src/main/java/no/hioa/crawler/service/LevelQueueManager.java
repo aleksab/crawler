@@ -18,14 +18,16 @@ import org.slf4j.LoggerFactory;
 /**
  * This default queue manager only adds link for a specified domain.
  */
-public class DefaultQueueManager implements QueueManager
+public class LevelQueueManager implements QueueManager
 {
 	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
 	private ConcurrentLinkedQueue<Link>	queue			= null;
 	private HashSet<Link>				knownLinks		= null;
+	private HashSet<Link>				visitedLinks	= null;
 	private Link						crawlDomain		= null;
+	private int							maxLevel		= 0;
 
 	/**
 	 * Constructor
@@ -35,12 +37,14 @@ public class DefaultQueueManager implements QueueManager
 	 * @param seeds
 	 *            list of start pages
 	 */
-	public DefaultQueueManager(Link crawlDomain, List<Link> seeds)
+	public LevelQueueManager(Link crawlDomain, List<Link> seeds, int maxLevel)
 	{
 		super();
 		queue = new ConcurrentLinkedQueue<>();
-		knownLinks = new HashSet<>();
+		this.knownLinks = new HashSet<>();
+		this.visitedLinks = new HashSet<>();
 		this.crawlDomain = crawlDomain;
+		this.maxLevel = maxLevel;
 
 		knownLinks.addAll(seeds);
 		queue.addAll(seeds);
@@ -49,13 +53,9 @@ public class DefaultQueueManager implements QueueManager
 	@Override
 	public Link getNextLink()
 	{
-		return queue.poll();
-	}
-
-	@Override
-	public List<Link> getNextLinks(int numberOfLinks)
-	{
-		return Collections.singletonList(queue.poll());
+		Link link = queue.poll();
+		visitedLinks.add(link);
+		return link;
 	}
 
 	@Override
@@ -74,12 +74,18 @@ public class DefaultQueueManager implements QueueManager
 	public List<Link> getAllVisitedLinks()
 	{
 		List<Link> list = new LinkedList<>();
-		for (Link link : knownLinks)
+		for (Link link : visitedLinks)
 		{
 			list.add(link);
 		}
 
 		return list;
+	}
+
+	@Override
+	public List<Link> getNextLinks(int numberOfLinks)
+	{
+		return Collections.singletonList(queue.poll());
 	}
 
 	@Override
@@ -94,9 +100,12 @@ public class DefaultQueueManager implements QueueManager
 					String domain = LinkUtil.normalizeDomain(link.getLink());
 					if (crawlDomain.getLink().equalsIgnoreCase(domain) && !knownLinks.contains(link))
 					{
-						logger.info("Adding link {} to queue", link);
-						knownLinks.add(link);
-						queue.add(link);
+						if (isCorrectLevel(link, maxLevel))
+						{
+							logger.info("Adding link {} to queue", link);
+							knownLinks.add(link);
+							queue.add(link);
+						}
 					}
 				}
 				catch (Exception ex)
@@ -109,5 +118,11 @@ public class DefaultQueueManager implements QueueManager
 
 		logger.info("Queue size ({}): {}, knownLinks: {}", crawlDomain.getLink(), queue.size(), knownLinks.size());
 		consoleLogger.info("Queue size ({}): {}, knownLinks: {}", crawlDomain.getLink(), queue.size(), knownLinks.size());
+	}
+
+	boolean isCorrectLevel(Link link, int maxLevel)
+	{
+		int level = LinkUtil.determineLinkLevel(link.getLink());
+		return (level <= maxLevel);
 	}
 }

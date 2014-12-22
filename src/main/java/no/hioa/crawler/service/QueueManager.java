@@ -36,4 +36,18 @@ public interface QueueManager
 	 * @return
 	 */
 	public void updateQueue(Map<Page, Set<Link>> result);
+
+	/**
+	 * Get all visited links
+	 * 
+	 * @return
+	 */
+	public List<Link> getAllVisitedLinks();
+
+	/**
+	 * Get all known links
+	 * 
+	 * @return
+	 */
+	public List<Link> getAllKnownLinks();
 }

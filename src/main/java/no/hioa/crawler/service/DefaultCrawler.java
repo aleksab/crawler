@@ -23,6 +23,12 @@ public abstract class DefaultCrawler
 
 	private QueueManager		qm;
 
+	public DefaultCrawler(QueueManager queueManager)
+	{
+		super();
+		this.qm = queueManager;
+	}
+
 	public DefaultCrawler(Link link)
 	{
 		super();
@@ -32,6 +38,16 @@ public abstract class DefaultCrawler
 	public DefaultCrawler()
 	{
 		super();
+	}
+
+	public void setQueueManager(QueueManager queueManager)
+	{
+		this.qm = queueManager;
+	}
+
+	public QueueManager getQueueManager()
+	{
+		return qm;
 	}
 
 	public void setDomain(Link link)
