@@ -54,7 +54,10 @@ public class LevelQueueManager implements QueueManager
 	public Link getNextLink()
 	{
 		Link link = queue.poll();
-		visitedLinks.add(link);
+		
+		if (link != null)			
+			visitedLinks.add(link);
+		
 		return link;
 	}
 

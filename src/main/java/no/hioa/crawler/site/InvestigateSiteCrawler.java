@@ -42,8 +42,12 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 	@Parameter(names = "-ignoreLinks", description = "Which links to ignore (comma seperated)", required = false)
 	private String				ignore			= "";
 
+	@Parameter(names = "-maxTime", description = "Max time in minutes", required = false)
+	private double				maxTimeInMin	= 2;
+
 	private boolean				shouldAbort		= false;
 	private List<String>		ignoreList		= null;
+	private long				startTime		= 0;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -81,6 +85,7 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 	{
 		logger.info("Starting to crawl " + site.getLink());
 		consoleLogger.info("Starting to crawl " + site.getLink());
+		startTime = System.currentTimeMillis();
 
 		startCrawling();
 
@@ -138,7 +143,15 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 
 	protected boolean shouldAbort()
 	{
-		return shouldAbort;
+		long elapsedTime = (System.currentTimeMillis() - startTime) / (1000 * 60);
+
+		if (elapsedTime > maxTimeInMin)
+		{
+			logger.info("Max time elapsed: {}", elapsedTime);
+			return true;
+		}
+		else
+			return shouldAbort;
 	}
 
 	void saveStats()
@@ -157,12 +170,25 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 			logger.error("Could not save stats to file " + newFile, ex);
 		}
 
-		newFile = new File("target/" + site.getLink().toLowerCase() + "-links.txt");
-		logger.info("Saving links to file {}", newFile);
+		newFile = new File("target/" + site.getLink().toLowerCase() + "-visited-links.txt");
+		logger.info("Saving visited links to file {}", newFile);
 
 		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
 		{
 			for (Link link : getQueueManager().getAllVisitedLinks())
+				writer.write(link.getLink() + "\n");
+		}
+		catch (IOException ex)
+		{
+			logger.error("Could not save links to file " + newFile, ex);
+		}
+
+		newFile = new File("target/" + site.getLink().toLowerCase() + "-known-links.txt");
+		logger.info("Saving known links to file {}", newFile);
+
+		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
+		{
+			for (Link link : getQueueManager().getAllKnownLinks())
 				writer.write(link.getLink() + "\n");
 		}
 		catch (IOException ex)
