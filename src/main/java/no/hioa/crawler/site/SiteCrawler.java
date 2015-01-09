@@ -42,7 +42,7 @@ public class SiteCrawler extends DefaultCrawler
 	private String				folder			= "target/";
 
 	@Parameter(names = "-maxSize", description = "Max size of files", required = false)
-	private double				maxSizeMb		= 10 * 1024 * 2014;
+	private double				maxSizeMb		= 10 * 1024 * 1014;
 
 	@Parameter(names = "-ignoreLinks", description = "Which links to ignore (comma seperated)", required = false)
 	private String				ignore			= "";
