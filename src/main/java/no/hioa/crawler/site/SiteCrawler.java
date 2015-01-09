@@ -144,6 +144,22 @@ public class SiteCrawler extends DefaultCrawler
 	{
 		for (String ignore : ignoreList)
 		{
+			
+			if (StringUtils.containsIgnoreCase(link, ".pdf"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".jpg"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".png"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".gif"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".mpg"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".avi"))
+				return true;
+			if (StringUtils.containsIgnoreCase(link, ".mp3"))
+				return true;
+			
 			if (StringUtils.containsIgnoreCase(link, ignore))
 				return true;
 		}

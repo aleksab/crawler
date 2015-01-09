@@ -37,13 +37,13 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 	private String				url				= null;
 
 	@Parameter(names = "-maxLevel", description = "Max level to crawl", required = false)
-	private int					maxLevel		= 2;
+	private int					maxLevel		= -1;
 
 	@Parameter(names = "-ignoreLinks", description = "Which links to ignore (comma seperated)", required = false)
 	private String				ignore			= "";
 
 	@Parameter(names = "-maxTime", description = "Max time in minutes", required = false)
-	private double				maxTimeInMin	= 2;
+	private double				maxTimeInMin	= 30;
 
 	private boolean				shouldAbort		= false;
 	private List<String>		ignoreList		= null;
@@ -79,12 +79,13 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before
+	 * all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
-		logger.info("Starting to crawl " + site.getLink());
-		consoleLogger.info("Starting to crawl " + site.getLink());
+		logger.info("Starting to crawl " + site.getLink() + " with max time of " + maxTimeInMin + " and a depth of " + maxLevel);
+		consoleLogger.info("Starting to crawl " + site.getLink() + " with max time of " + maxTimeInMin + " and a depth of " + maxLevel);
 		startTime = System.currentTimeMillis();
 
 		startCrawling();

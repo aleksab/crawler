@@ -125,6 +125,10 @@ public class LevelQueueManager implements QueueManager
 
 	boolean isCorrectLevel(Link link, int maxLevel)
 	{
+		// if -1 it means we ignore level
+		if (maxLevel == -1)
+			return true;
+		
 		int level = LinkUtil.determineLinkLevel(link.getLink());
 		return (level <= maxLevel);
 	}
