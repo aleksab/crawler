@@ -134,7 +134,7 @@ public class SiteCrawler extends DefaultCrawler
 			savePage(document);
 		}
 
-		if (hasReachMaxSize())
+		if (shouldSavePages && hasReachMaxSize())
 		{
 			shouldAbort = true;
 		}
@@ -213,7 +213,10 @@ public class SiteCrawler extends DefaultCrawler
 			return true;
 		}
 		else
+		{
+			logger.debug("Size of folder is {} and maxSize is {}", sizeFolder, maxSizeMb);
 			return false;
+		}
 	}
 
 	private String removeNoneAlphaNumeric(String input)
