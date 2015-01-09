@@ -31,7 +31,7 @@ public class ExtractTextContent
 		PropertyConfigurator.configure("log4j.properties");
 		ExtractTextContent extractor = new ExtractTextContent();
 
-		extractor.extractFolders(new File("C:/data/crawl"), new File("C:/data/text"));
+		extractor.extractFolders(new File("C:/data/terror/crawl"), new File("C:/data/terror/text"));
 	}
 
 	public ExtractTextContent()
