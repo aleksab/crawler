@@ -13,6 +13,7 @@ import no.hioa.crawler.util.LinkUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
@@ -21,14 +22,12 @@ import org.slf4j.LoggerFactory;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 
-public class FacebookCrawler extends DefaultCrawler
+public class FacebookCrawler
 {
 	private static final Logger	logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
 
-	private Link				site			= null;
-	private int					pageCounter		= 0;
-	private HashSet<Link>		externalLinks	= new HashSet<>();
+	private Link				group			= null;
 
 	@Parameter(names = "-group", description = "Facebook group to crawel", required = true)
 	private String				url				= null;
@@ -49,124 +48,58 @@ public class FacebookCrawler extends DefaultCrawler
 	{
 		PropertyConfigurator.configure("log4j.properties");
 		FacebookCrawler crawler = new FacebookCrawler(args);
-		crawler.crawlSite();
+		crawler.crawlGroup();
 	}
 
 	public FacebookCrawler(String[] args) throws IOException
 	{
 		new JCommander(this, args);
 
-		this.site = new Link(url);
-		this.setDomain(site);
+		this.group = new Link(url);
 
 		if (shouldSavePages)
 		{
-			outputFolder = folder + "/" + removeNoneAlphaNumeric(site.getLink());
+			outputFolder = folder + "/" + removeNoneAlphaNumeric(group.getLink());
 			FileUtils.forceMkdir(new File(outputFolder));
 		}
 	}
 
 	/**
-	 * Crawl the group and save stats to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the group and save stats to a file. The crawler will not exit
+	 * before all found links have been crawled.
 	 */
-	public void crawlSite()
+	public void crawlGroup()
 	{
-		logger.info("Starting to crawl " + site.getLink());
-		consoleLogger.info("Starting to crawl " + site.getLink());
+		logger.info("Starting to crawl group " + group.getLink());
+		consoleLogger.info("Starting to crawl group " + group.getLink());
 
-		startCrawling();
-
-		saveStats();
-
-		logger.info("Done crawling " + site.getLink());
-	}
-
-	protected void crawlDocument(Document document)
-	{
-		pageCounter++;
-
-		Set<Link> links = new HashSet<>();
-		for (Element element : document.select("a[href]"))
-		{
-			String link = element.attr("abs:href");
-			if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
-			{
-				links.add(new Link(link, !shouldFollowDynamicLinks()));
-			}
-		}
-
-		for (Link link : links)
-		{
-			try
-			{
-				Link domain = new Link(LinkUtil.normalizeDomain(link.getLink()));
-				if (!site.getLink().equalsIgnoreCase(domain.getLink()) && !externalLinks.contains(domain))
-				{
-					externalLinks.add(domain);
-				}
-			}
-			catch (Exception ex)
-			{
-				logger.warn("Could not check if link belongs to domain: {}", link.getLink());
-			}
-		}
-
-		if (shouldSavePages)
-		{
+		Document document = fetchContent(group);
+		
+		if (document != null)
 			savePage(document);
-		}
-
-		if (hasReachMaxSize())
-		{
-			shouldAbort = true;
-		}
+		
+		logger.info("Done crawling group " + group.getLink());
 	}
 
-	protected boolean shouldIgnoreLink(String link)
+	private static final String	USER_AGENT		= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64)";
+	private static final int	PAGE_TIMEOUT	= 1000 * 15;
+	
+	public Document fetchContent(Link link)
 	{
-		return false;
-	}
-
-	protected boolean shouldFollowDynamicLinks()
-	{
-		return true;
-	}
-
-	protected boolean shouldAbort()
-	{
-		return shouldAbort;
-	}
-
-	void saveStats()
-	{
-		File newFile = new File("target/" + site.getLink().toLowerCase() + "-stats.txt");
-		logger.info("Saving stats to file {}", newFile);
-
-		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
+		try
 		{
-			writer.write("Site: " + site.getLink() + "\n");
-			writer.append("Pages: " + pageCounter + "\n");
-			writer.append("External Links: " + externalLinks.size() + "\n");
+			String properLink = link.getLink();
+			if (!StringUtils.startsWithIgnoreCase(properLink, "http://") && !StringUtils.startsWithIgnoreCase(properLink, "https://"))
+				properLink = "http://" + properLink;			
+			return Jsoup.connect(properLink).timeout(PAGE_TIMEOUT).userAgent(USER_AGENT).followRedirects(true).get();
 		}
-		catch (IOException ex)
+		catch (Exception ex)
 		{
-			logger.error("Could not save stats to file " + newFile, ex);
-		}
-
-		newFile = new File("target/" + site.getLink().toLowerCase() + "-links.txt");
-		logger.info("Saving links to file {}", newFile);
-
-		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
-		{
-			for (Link link : externalLinks)
-				writer.write(link.getLink() + "\n");
-		}
-		catch (IOException ex)
-		{
-			logger.error("Could not save links to file " + newFile, ex);
+			logger.warn("Could not fetch content for link " + link.getLink(), ex);
+			return null;
 		}
 	}
-
+	
 	void savePage(Document document)
 	{
 		try
@@ -179,19 +112,7 @@ public class FacebookCrawler extends DefaultCrawler
 			logger.error("Could not save page", ex);
 		}
 	}
-
-	boolean hasReachMaxSize()
-	{
-		double sizeFolder = (double) FileUtils.sizeOfDirectory(new File(outputFolder)) / (1024d * 1024d);
-		if (sizeFolder >= maxSizeMb)
-		{
-			logger.warn("Size of folder with pages has reached limit: {}", sizeFolder);
-			return true;
-		}
-		else
-			return false;
-	}
-
+	
 	private String removeNoneAlphaNumeric(String input)
 	{
 		return input.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
