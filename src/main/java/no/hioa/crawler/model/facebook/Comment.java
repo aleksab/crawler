@@ -4,16 +4,17 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
+import org.joda.time.DateTime;
 
 public class Comment
 {
-	private String	id;
-	private Entity	from;
-	private String	message;
-	private String	can_remove;
-	private String	created_time;
-	private String	like_count;
-	private String	user_likes;
+	private String		id;
+	private Entity		from;
+	private String		message;
+	private String		can_remove;
+	private DateTime	created_time;
+	private String		like_count;
+	private String		user_likes;
 
 	public String getId()
 	{
@@ -55,12 +56,12 @@ public class Comment
 		this.can_remove = can_remove;
 	}
 
-	public String getCreated_time()
+	public DateTime getCreated_time()
 	{
 		return created_time;
 	}
 
-	public void setCreated_time(String created_time)
+	public void setCreated_time(DateTime created_time)
 	{
 		this.created_time = created_time;
 	}

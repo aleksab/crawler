@@ -1,12 +1,8 @@
 package no.hioa.crawler.site;
 
-import java.io.FileReader;
-import java.io.FileWriter;
+import no.hioa.crawler.model.facebook.GroupFeed;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.PropertyConfigurator;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,56 +18,13 @@ public class FacebookCrawlerTest
 	public void setup() throws Exception
 	{
 		PropertyConfigurator.configure("log4j.properties");
-		crawler = new FacebookCrawler(new String[] { "-group", "asd" });
+		crawler = new FacebookCrawler(new String[] { "-groupId", "1", "-token", "2" });
 	}
 
 	@Test
-	public void testCrawlDocument()
+	public void testParseJson()
 	{
-
-	}
-
-	@Test
-	public void saveGroup1() throws Exception
-	{
-		String link = "https://www.facebook.com/britainfirstgb";
-		String file = "src/test/resources/no/hioa/crawler/site/group1.document";
-		Document document = Jsoup.connect(link).timeout(1000 * 15).userAgent("Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)").followRedirects(
-				false).get();
-
-		IOUtils.write(document.html(), new FileWriter(file));
-	}
-
-	@Test
-	public void saveGroup2() throws Exception
-	{
-		String link = "https://www.facebook.com/NorgesFrihetspartinfp ";
-		String file = "src/test/resources/no/hioa/crawler/site/group2.document";
-		Document document = Jsoup.connect(link).timeout(1000 * 15).userAgent("Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64) Crawler (ab@prognett.no)").followRedirects(
-				false).get();
-
-		IOUtils.write(document.html(), new FileWriter(file));
-	}
-
-	@Test
-	public void getGroup1() throws Exception
-	{
-		String file = "src/test/resources/no/hioa/crawler/site/group1.document";
-		Document document = getDocument(file);
-		Assert.assertEquals(123, document.html().length());
-	}
-
-	@Test
-	public void getGroup2() throws Exception
-	{
-		String file = "src/test/resources/no/hioa/crawler/site/group2.document";
-		Document document = getDocument(file);
-		Assert.assertEquals(123, document.html().length());
-	}
-
-	public static Document getDocument(String file) throws Exception
-	{
-		String html = IOUtils.toString(new FileReader(file));
-		return Jsoup.parse(html);
+		GroupFeed feed = crawler.parseJson("src/test/resources/no/hioa/crawler/site/group1.json");
+		Assert.assertEquals("438852196217474_548708421898517", feed.getData().get(0).getId());
 	}
 }

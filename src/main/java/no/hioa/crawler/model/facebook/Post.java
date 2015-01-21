@@ -6,6 +6,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
+import org.joda.time.DateTime;
 
 public class Post
 {
@@ -22,8 +23,8 @@ public class Post
 	private List<Link>	actions;
 	private Privacy		privacy;
 	private String		type;
-	private String		created_time;
-	private String		updated_time;
+	private DateTime	created_time;
+	private DateTime	updated_time;
 	private LikeList	likes;
 	private CommentList	comments;
 
@@ -157,22 +158,22 @@ public class Post
 		this.type = type;
 	}
 
-	public String getCreated_time()
+	public DateTime getCreated_time()
 	{
 		return created_time;
 	}
 
-	public void setCreated_time(String created_time)
+	public void setCreated_time(DateTime created_time)
 	{
 		this.created_time = created_time;
 	}
 
-	public String getUpdated_time()
+	public DateTime getUpdated_time()
 	{
 		return updated_time;
 	}
 
-	public void setUpdated_time(String updated_time)
+	public void setUpdated_time(DateTime updated_time)
 	{
 		this.updated_time = updated_time;
 	}
