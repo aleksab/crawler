@@ -1,26 +1,25 @@
 package no.hioa.crawler.site;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.Set;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 
 import no.hioa.crawler.model.Link;
-import no.hioa.crawler.service.DefaultCrawler;
-import no.hioa.crawler.util.LinkUtil;
+import no.hioa.crawler.model.facebook.GroupFeed;
+import no.hioa.crawler.model.facebook.JsonStringAdapter;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class FacebookCrawler
 {
@@ -48,7 +47,9 @@ public class FacebookCrawler
 	{
 		PropertyConfigurator.configure("log4j.properties");
 		FacebookCrawler crawler = new FacebookCrawler(args);
-		crawler.crawlGroup();
+		// crawler.crawlGroup("438852196217474",
+		// "CAACEdEose0cBAFHedpQdCuLXqZBp9oXpszjd93ZAnB7f0V8kFh0W2KnbkyR23NZBOgHrTmxZAhWn8wZCcL3sgUYa9xIhZB6xtSErZA3Wh3aSoGaPSpcaWZCyjsGF0owIarPoTSyQgD6ysZBXiZAn46eU6ikWO8EKrYqsCLcRVgOf0J7EYhSKble64AFPonFgcZAkhNiJ4C76EyP8b1U9G1KrHj9");
+		crawler.parseJson("C:/Development/workspace 2/Hioa - Crawler/target/facebookcombritainfirstgb/test.json");
 	}
 
 	public FacebookCrawler(String[] args) throws IOException
@@ -65,54 +66,90 @@ public class FacebookCrawler
 	}
 
 	/**
-	 * Crawl the group and save stats to a file. The crawler will not exit
-	 * before all found links have been crawled.
+	 * Crawl the group and save stats to a file. The crawler will not exit before all found links have been crawled.
 	 */
-	public void crawlGroup()
+	public void crawlGroup(String groupId, String accessToken)
 	{
 		logger.info("Starting to crawl group " + group.getLink());
 		consoleLogger.info("Starting to crawl group " + group.getLink());
 
-		Document document = fetchContent(group);
-		
-		if (document != null)
-			savePage(document);
-		
+		String text = openRestUrl("https://graph.facebook.com/" + groupId + "/feed?access_token=" + accessToken);
+		if (text != null)
+			saveJson(text);
+
 		logger.info("Done crawling group " + group.getLink());
 	}
 
-	private static final String	USER_AGENT		= "Mozilla/5.0 (Linux 3.0.0-13-virtual x86_64)";
-	private static final int	PAGE_TIMEOUT	= 1000 * 15;
-	
-	public Document fetchContent(Link link)
+	public void parseJson(String file)
+	{
+		String json = readJson(file);
+		GroupFeed feed = getFeed(json);
+		consoleLogger.info("Feed: " + feed);
+	}
+
+	private GroupFeed getFeed(String json)
+	{
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		gsonBuilder.registerTypeAdapter(String.class, new JsonStringAdapter());
+		Gson gson = gsonBuilder.create();
+
+		return gson.fromJson(json, GroupFeed.class);
+	}
+
+	String openRestUrl(String restUrl)
 	{
 		try
 		{
-			String properLink = link.getLink();
-			if (!StringUtils.startsWithIgnoreCase(properLink, "http://") && !StringUtils.startsWithIgnoreCase(properLink, "https://"))
-				properLink = "http://" + properLink;			
-			return Jsoup.connect(properLink).timeout(PAGE_TIMEOUT).userAgent(USER_AGENT).followRedirects(true).get();
+			URL url = new URL(restUrl);
+
+			// make connection
+			URLConnection urlc = url.openConnection();
+
+			// get result
+			BufferedReader br = new BufferedReader(new InputStreamReader(urlc.getInputStream(), "UTF-8"));
+			String l = null;
+			StringBuffer buffer = new StringBuffer();
+			while ((l = br.readLine()) != null)
+			{
+				buffer = buffer.append(l);
+			}
+			br.close();
+
+			return buffer.toString();
 		}
 		catch (Exception ex)
 		{
-			logger.warn("Could not fetch content for link " + link.getLink(), ex);
+			logger.error("Unknown error", ex);
 			return null;
 		}
 	}
-	
-	void savePage(Document document)
+
+	String readJson(String file)
 	{
 		try
 		{
-			String file = outputFolder + "/" + System.currentTimeMillis() + ".html";
-			FileUtils.writeStringToFile(new File(file), document.html(), "UTF-8");
+			return FileUtils.readFileToString(new File(file), "UTF-8");
 		}
 		catch (IOException ex)
 		{
-			logger.error("Could not save page", ex);
+			logger.error("Could not read file", ex);
+			return null;
 		}
 	}
-	
+
+	void saveJson(String text)
+	{
+		try
+		{
+			String file = outputFolder + "/" + System.currentTimeMillis() + ".json";
+			FileUtils.writeStringToFile(new File(file), text, "UTF-8");
+		}
+		catch (IOException ex)
+		{
+			logger.error("Could not save text", ex);
+		}
+	}
+
 	private String removeNoneAlphaNumeric(String input)
 	{
 		return input.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
