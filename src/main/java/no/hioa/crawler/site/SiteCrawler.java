@@ -85,7 +85,8 @@ public class SiteCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before
+	 * all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
@@ -99,7 +100,7 @@ public class SiteCrawler extends DefaultCrawler
 		logger.info("Done crawling " + site.getLink());
 	}
 
-	protected void crawlDocument(Document document)
+	protected void crawlDocument(Document document, Link url)
 	{
 		pageCounter++;
 
@@ -131,7 +132,7 @@ public class SiteCrawler extends DefaultCrawler
 
 		if (shouldSavePages)
 		{
-			savePage(document);
+			savePage(document, url.getLink());
 		}
 
 		if (shouldSavePages && hasReachMaxSize())
@@ -144,7 +145,7 @@ public class SiteCrawler extends DefaultCrawler
 	{
 		for (String ignore : ignoreList)
 		{
-			
+
 			if (StringUtils.containsIgnoreCase(link, ".pdf"))
 				return true;
 			if (StringUtils.containsIgnoreCase(link, ".jpg"))
@@ -159,7 +160,7 @@ public class SiteCrawler extends DefaultCrawler
 				return true;
 			if (StringUtils.containsIgnoreCase(link, ".mp3"))
 				return true;
-			
+
 			if (StringUtils.containsIgnoreCase(link, ignore))
 				return true;
 		}
@@ -207,12 +208,16 @@ public class SiteCrawler extends DefaultCrawler
 		}
 	}
 
-	void savePage(Document document)
+	void savePage(Document document, String url)
 	{
 		try
 		{
+			StringBuffer buffer = new StringBuffer();
+			buffer.append("URL: ").append(url).append("\n");
+			buffer.append(document.html());
+
 			String file = outputFolder + "/" + System.currentTimeMillis() + ".html";
-			FileUtils.writeStringToFile(new File(file), document.html(), "UTF-8");
+			FileUtils.writeStringToFile(new File(file), buffer.toString(), "UTF-8");
 		}
 		catch (IOException ex)
 		{
@@ -229,7 +234,7 @@ public class SiteCrawler extends DefaultCrawler
 			return true;
 		}
 		else
-		{			
+		{
 			return false;
 		}
 	}

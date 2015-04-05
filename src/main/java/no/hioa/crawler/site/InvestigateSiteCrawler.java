@@ -95,7 +95,7 @@ public class InvestigateSiteCrawler extends DefaultCrawler
 		logger.info("Done crawling " + site.getLink());
 	}
 
-	protected void crawlDocument(Document document)
+	protected void crawlDocument(Document document, Link url)
 	{
 		pageCounter++;
 

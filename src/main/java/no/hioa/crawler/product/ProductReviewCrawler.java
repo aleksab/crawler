@@ -66,7 +66,7 @@ public class ProductReviewCrawler extends DefaultCrawler
 		reviewManager.generateXml(output);
 	}
 
-	protected void crawlDocument(Document document)
+	protected void crawlDocument(Document document, Link url)
 	{
 		if (doesPageHasReviews(document))
 		{

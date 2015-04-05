@@ -55,7 +55,7 @@ public abstract class DefaultCrawler
 		this.qm = new DefaultQueueManager(link, Collections.singletonList(link));
 	}
 
-	protected abstract void crawlDocument(Document document);
+	protected abstract void crawlDocument(Document document, Link url);
 
 	protected abstract boolean shouldIgnoreLink(String link);
 
@@ -134,7 +134,7 @@ public abstract class DefaultCrawler
 
 		try
 		{
-			crawlDocument(document);
+			crawlDocument(document, link);
 		}
 		catch (Exception ex)
 		{
