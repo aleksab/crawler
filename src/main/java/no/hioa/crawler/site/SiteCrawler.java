@@ -85,8 +85,7 @@ public class SiteCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before
-	 * all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
@@ -180,7 +179,7 @@ public class SiteCrawler extends DefaultCrawler
 
 	void saveStats()
 	{
-		File newFile = new File("target/" + site.getLink().toLowerCase() + "-stats.txt");
+		File newFile = new File("target/" + removeNoneAlphaNumeric(site.getLink()) + "-stats.txt");
 		logger.info("Saving stats to file {}", newFile);
 
 		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))
@@ -194,7 +193,7 @@ public class SiteCrawler extends DefaultCrawler
 			logger.error("Could not save stats to file " + newFile, ex);
 		}
 
-		newFile = new File("target/" + site.getLink().toLowerCase() + "-links.txt");
+		newFile = new File("target/" + removeNoneAlphaNumeric(site.getLink()) + "-links.txt");
 		logger.info("Saving links to file {}", newFile);
 
 		try (PrintWriter writer = new PrintWriter(newFile, "ISO-8859-1"))

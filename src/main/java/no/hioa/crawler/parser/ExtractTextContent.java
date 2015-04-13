@@ -4,15 +4,20 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -31,7 +36,12 @@ public class ExtractTextContent
 		PropertyConfigurator.configure("log4j.properties");
 		ExtractTextContent extractor = new ExtractTextContent();
 
-		extractor.extractFolders(new File("C:/data/terror/crawl"), new File("C:/data/terror/text"));
+		//extractor.extractFolders(new File("E:/Data/blogs2/crawl/"), new File("E:/Data/blogs2/text/"));
+
+		// extractor.extractFolderContent(new File("E:/Data/blogs2/crawl/bradfordprotestblogspotcom/"), new
+		// File("E:/Data/blogs2/text/bradfordprotestblogspotcom/"));
+
+		System.out.println(extractor.extractDate(new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 	}
 
 	public ExtractTextContent()
@@ -63,6 +73,8 @@ public class ExtractTextContent
 
 	public boolean extractFolderContent(File folder, File outputFolder)
 	{
+		HashMap<String, LocalDate> dates = new HashMap<>();
+
 		for (File file : folder.listFiles())
 		{
 			if (file.isFile())
@@ -70,12 +82,83 @@ public class ExtractTextContent
 				String content = extractTextContent(file);
 				if (content != null && !StringUtils.isEmpty(content))
 				{
-					saveResult(new File(outputFolder + "/" + System.currentTimeMillis() + ".txt"), content);
+					saveResult(new File(outputFolder + "/" + file.getName() + ".txt"), content);
+					dates.put(file.getName(), extractDate(file));
 				}
 			}
 		}
 
+		try
+		{
+			String buffer = "";
+			for (String key : dates.keySet())
+			{
+				if (dates.get(key) == null)
+					buffer += key + ":unknown,";
+				else
+					buffer += key + ":" + dates.get(key) + ",";
+			}
+
+			buffer = StringUtils.substringBeforeLast(buffer, ",");
+
+			FileUtils.writeStringToFile(new File(outputFolder + "/dates.txt"), buffer.toString());
+		}
+		catch (Exception ex)
+		{
+			consoleLogger.error("Unknown error", ex);
+		}
+
 		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	public LocalDate extractDate(File htmlFile)
+	{
+		try
+		{
+			List<String> lines = FileUtils.readLines(htmlFile);
+
+			String urlLine = lines.get(0);
+
+			if (!StringUtils.contains(urlLine, "URL:"))
+			{
+				consoleLogger.error("Could not find URL in file: {}", htmlFile);
+				return null;
+			}
+			else
+			{
+				String url = StringUtils.substringAfter(urlLine, "URL: ");
+				String year = getYear(url);
+				String month = getMonth(url);
+
+				if (year != null && month != null)
+				{
+					String date = year + "-" + month;
+					return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM"));
+				}
+				else if (year != null)
+					return LocalDate.parse(year, DateTimeFormat.forPattern("yyyy"));
+				else
+				{
+					for (String line : lines)
+					{
+						if (StringUtils.contains(line, "article:published_time"))
+						{
+							String date = StringUtils.substringAfter(line, "content");
+							date = StringUtils.substringBetween(date, "\"", "\"");
+
+							return LocalDate.parse(year, DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+						}
+					}
+				}
+			}
+
+			return null;
+		}
+		catch (Exception ex)
+		{			
+			return null;
+		}
 	}
 
 	public String extractTextContent(File htmlFile)
@@ -165,5 +248,45 @@ public class ExtractTextContent
 		}
 
 		return words;
+	}
+
+	private String getMonth(String input)
+	{
+		try
+		{
+			Pattern p = Pattern.compile(".*([/\\\\]\\d\\d[/\\\\]).*");
+			Matcher m = p.matcher(input.replaceAll(" ,", ","));
+
+			if (m.matches())
+				return StringUtils.substringBetween(m.group(1), "/", "/");
+			else
+			{				
+				return null;
+			}
+		}
+		catch (Exception ex)
+		{			
+			return null;
+		}
+	}
+
+	private String getYear(String input)
+	{
+		try
+		{
+			Pattern p = Pattern.compile(".*([/\\\\]20\\d\\d[/\\\\]).*");
+			Matcher m = p.matcher(input);
+
+			if (m.matches())
+				return StringUtils.substringBetween(m.group(1), "/", "/");
+			else
+			{				
+				return null;
+			}
+		}
+		catch (Exception ex)
+		{			
+			return null;
+		}
 	}
 }

@@ -92,7 +92,7 @@ public class DefaultQueueManager implements QueueManager
 				try
 				{
 					String domain = LinkUtil.normalizeDomain(link.getLink());
-					if (crawlDomain.getLink().equalsIgnoreCase(domain) && !knownLinks.contains(link))
+					if (LinkUtil.normalizeDomain(crawlDomain.getLink()).equalsIgnoreCase(domain) && !knownLinks.contains(link))
 					{
 						logger.info("Adding link {} to queue", link);
 						knownLinks.add(link);
