@@ -36,12 +36,11 @@ public class ExtractTextContent
 		PropertyConfigurator.configure("log4j.properties");
 		ExtractTextContent extractor = new ExtractTextContent();
 
-		//extractor.extractFolders(new File("E:/Data/blogs2/crawl/"), new File("E:/Data/blogs2/text/"));
+		// extractor.extractFolders(new File("E:/Data/blogs2/crawl/"), new File("E:/Data/blogs2/text/"));
 
-		// extractor.extractFolderContent(new File("E:/Data/blogs2/crawl/bradfordprotestblogspotcom/"), new
-		// File("E:/Data/blogs2/text/bradfordprotestblogspotcom/"));
+		// extractor.extractFolderContent(new File("E:/Data/blogs2/crawl/honestthinkingorgno/"), new File("E:/Data/blogs2/text/honestthinkingorgno/"));
 
-		System.out.println(extractor.extractDate(new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
+		// System.out.println(extractor.extractDate(new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 	}
 
 	public ExtractTextContent()
@@ -156,7 +155,7 @@ public class ExtractTextContent
 			return null;
 		}
 		catch (Exception ex)
-		{			
+		{
 			return null;
 		}
 	}
@@ -260,12 +259,12 @@ public class ExtractTextContent
 			if (m.matches())
 				return StringUtils.substringBetween(m.group(1), "/", "/");
 			else
-			{				
+			{
 				return null;
 			}
 		}
 		catch (Exception ex)
-		{			
+		{
 			return null;
 		}
 	}
@@ -280,12 +279,12 @@ public class ExtractTextContent
 			if (m.matches())
 				return StringUtils.substringBetween(m.group(1), "/", "/");
 			else
-			{				
+			{
 				return null;
 			}
 		}
 		catch (Exception ex)
-		{			
+		{
 			return null;
 		}
 	}
