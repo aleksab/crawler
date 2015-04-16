@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 public class ExtractTextContent
 {
-	private static final Logger	consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
+	private static final Logger	consoleLogger	= LoggerFactory.getLogger(ExtractTextContent.class);
 
 	private List<String>		stopWords		= null;
 
@@ -36,11 +36,18 @@ public class ExtractTextContent
 		PropertyConfigurator.configure("log4j.properties");
 		ExtractTextContent extractor = new ExtractTextContent();
 
-		// extractor.extractFolders(new File("E:/Data/blogs2/crawl/"), new File("E:/Data/blogs2/text/"));
+		// extractor.extractFolders(new File("E:/Data/blogs2/crawl/"), new
+		// File("E:/Data/blogs2/text/"));
 
-		// extractor.extractFolderContent(new File("E:/Data/blogs2/crawl/honestthinkingorgno/"), new File("E:/Data/blogs2/text/honestthinkingorgno/"));
+		// extractor.extractFolderContent(new
+		// File("E:/Data/blogs2/crawl/honestthinkingorgno/"), new
+		// File("E:/Data/blogs2/text/honestthinkingorgno/"));
 
-		// System.out.println(extractor.extractDate(new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
+		// System.out.println(extractor.extractDate(new
+		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
+		
+		System.out.println(extractor.extractLinks(new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+		
 	}
 
 	public ExtractTextContent()
@@ -108,6 +115,60 @@ public class ExtractTextContent
 		}
 
 		return true;
+	}
+
+	public HashMap<LocalDate, String> extractLinks(File htmlFile)
+	{
+		try
+		{
+			HashMap<LocalDate, String> links = new HashMap<>();
+
+			String html = FileUtils.readFileToString(htmlFile, "UTF-8");
+			Document doc = Jsoup.parse(html);
+			Elements elements = doc.select("p");
+
+			StringBuffer buffer = new StringBuffer();
+			Iterator<Element> it = elements.listIterator();
+			while (it.hasNext())
+			{
+				Element element = it.next();
+				
+				Elements el = element.select("a[href]");
+				for (Element e : el)
+				{					
+					consoleLogger.info(e.text() + ": " + e.attr("href"));
+					// find tag in source (can be multiple)
+					// extract 500 chars before and after, regex for dates
+				}
+			}						
+			
+			return links;
+		}
+		catch (Exception ex)
+		{
+			ex.printStackTrace();
+			return null;
+		}
+	}
+	
+	private String getLinks(String input)
+	{
+		try
+		{
+			Pattern p = Pattern.compile(".*([/\\.no]).*");
+			Matcher m = p.matcher(input);
+
+			if (m.matches())
+				return m.group(1);
+			else
+			{
+				return null;
+			}
+		}
+		catch (Exception ex)
+		{
+			return null;
+		}
 	}
 
 	@SuppressWarnings("unchecked")
