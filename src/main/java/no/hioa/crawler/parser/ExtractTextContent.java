@@ -13,6 +13,9 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import no.hioa.crawler.model.Link;
+import no.hioa.crawler.util.LinkUtil;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.PropertyConfigurator;
@@ -27,9 +30,9 @@ import org.slf4j.LoggerFactory;
 
 public class ExtractTextContent
 {
-	private static final Logger	consoleLogger	= LoggerFactory.getLogger(ExtractTextContent.class);
+	private static final Logger	logger		= LoggerFactory.getLogger(ExtractTextContent.class);
 
-	private List<String>		stopWords		= null;
+	private List<String>		stopWords	= null;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -45,9 +48,9 @@ public class ExtractTextContent
 
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
-		
-		System.out.println(extractor.extractLinks(new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
-		
+
+		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+
 	}
 
 	public ExtractTextContent()
@@ -61,7 +64,7 @@ public class ExtractTextContent
 		{
 			if (folder.isDirectory())
 			{
-				consoleLogger.info("Extracting text from folder {}", folder.getName());
+				logger.info("Extracting text from folder {}", folder.getName());
 
 				try
 				{
@@ -71,7 +74,7 @@ public class ExtractTextContent
 				}
 				catch (IOException ex)
 				{
-					consoleLogger.error("Could not save content for folder", ex);
+					logger.error("Could not save content for folder", ex);
 				}
 			}
 		}
@@ -111,13 +114,35 @@ public class ExtractTextContent
 		}
 		catch (Exception ex)
 		{
-			consoleLogger.error("Unknown error", ex);
+			logger.error("Unknown error", ex);
 		}
 
 		return true;
 	}
 
-	public HashMap<LocalDate, String> extractLinks(File htmlFile)
+	public boolean shouldUseLink(Link domain, String url)
+	{
+		try
+		{
+			if (StringUtils.isEmpty(url))
+				return false;
+			
+			url = LinkUtil.normalizeDomain(url);
+			if (domain.getLink().equalsIgnoreCase(url) || "/".equalsIgnoreCase(url))
+			{
+				logger.debug("Ignoring link since internal: " + url);
+				return false;
+			}
+			
+			return true;
+		}
+		catch (Exception ex)
+		{			
+			return false;
+		}
+	}
+	
+	public HashMap<LocalDate, String> extractLinks(Link domain, File htmlFile)
 	{
 		try
 		{
@@ -127,21 +152,44 @@ public class ExtractTextContent
 			Document doc = Jsoup.parse(html);
 			Elements elements = doc.select("p");
 
-			StringBuffer buffer = new StringBuffer();
 			Iterator<Element> it = elements.listIterator();
 			while (it.hasNext())
 			{
 				Element element = it.next();
-				
+
 				Elements el = element.select("a[href]");
 				for (Element e : el)
-				{					
-					consoleLogger.info(e.text() + ": " + e.attr("href"));
+				{
+					String url = e.attr("href");
+					
+					if (!shouldUseLink(domain, url))
+						continue;
+					
+					//logger.info("Trying to get date for link {}", url);
+					
+					// consoleLogger.info(e.html());
 					// find tag in source (can be multiple)
 					// extract 500 chars before and after, regex for dates
+					int index = StringUtils.indexOf(html, e.html());
+					if (index != -1)
+					{
+						int start = index - 500;
+						int end = index + 500;
+
+						if (start < 0)
+							start = 0;
+
+						if (end > html.length())
+							end = html.length();
+
+						String source = StringUtils.substring(html, start, end);
+						
+						if (url.contains("shariaunveiled"))							
+							logger.info(source);
+					}
 				}
-			}						
-			
+			}
+
 			return links;
 		}
 		catch (Exception ex)
@@ -150,7 +198,7 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-	
+
 	private String getLinks(String input)
 	{
 		try
@@ -182,7 +230,7 @@ public class ExtractTextContent
 
 			if (!StringUtils.contains(urlLine, "URL:"))
 			{
-				consoleLogger.error("Could not find URL in file: {}", htmlFile);
+				logger.error("Could not find URL in file: {}", htmlFile);
 				return null;
 			}
 			else
@@ -268,7 +316,7 @@ public class ExtractTextContent
 		}
 		catch (Exception ex)
 		{
-			consoleLogger.error("Unknown error", ex);
+			logger.error("Unknown error", ex);
 			return null;
 		}
 	}
@@ -286,7 +334,7 @@ public class ExtractTextContent
 		}
 		catch (IOException ex)
 		{
-			consoleLogger.error("Could not save content to file " + file, ex);
+			logger.error("Could not save content to file " + file, ex);
 		}
 	}
 
@@ -304,7 +352,7 @@ public class ExtractTextContent
 		}
 		catch (Exception ex)
 		{
-			consoleLogger.error("Could not read content for file " + file.getAbsolutePath(), ex);
+			logger.error("Could not read content for file " + file.getAbsolutePath(), ex);
 		}
 
 		return words;
