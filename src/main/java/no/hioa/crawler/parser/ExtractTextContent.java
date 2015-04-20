@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.util.LinkUtil;
+import no.hioa.crawler.util.RegexUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -49,7 +50,7 @@ public class ExtractTextContent
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 
-		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
 
 	}
 
@@ -126,22 +127,22 @@ public class ExtractTextContent
 		{
 			if (StringUtils.isEmpty(url))
 				return false;
-			
+
 			url = LinkUtil.normalizeDomain(url);
 			if (domain.getLink().equalsIgnoreCase(url) || "/".equalsIgnoreCase(url))
 			{
 				logger.debug("Ignoring link since internal: " + url);
 				return false;
 			}
-			
+
 			return true;
 		}
 		catch (Exception ex)
-		{			
+		{
 			return false;
 		}
 	}
-	
+
 	public HashMap<LocalDate, String> extractLinks(Link domain, File htmlFile)
 	{
 		try
@@ -161,31 +162,35 @@ public class ExtractTextContent
 				for (Element e : el)
 				{
 					String url = e.attr("href");
-					
+
 					if (!shouldUseLink(domain, url))
 						continue;
-					
-					//logger.info("Trying to get date for link {}", url);
-					
+
+					// logger.info("Trying to get date for link {}", url);
+
 					// consoleLogger.info(e.html());
 					// find tag in source (can be multiple)
 					// extract 500 chars before and after, regex for dates
 					int index = StringUtils.indexOf(html, e.html());
 					if (index != -1)
 					{
-						int start = index - 500;
-						int end = index + 500;
-
+						int start = index - 1000;
 						if (start < 0)
 							start = 0;
 
-						if (end > html.length())
-							end = html.length();
-
-						String source = StringUtils.substring(html, start, end);
+						String source = StringUtils.substring(html, start, index);
+						source = StringUtils.replace(source, url, "");						
 						
-						if (url.contains("shariaunveiled"))							
+						if (url.contains("shariaunveiled"))
+						{
 							logger.info(source);
+							LocalDate date = getDate(source);
+
+							if (date != null)
+								logger.info("Found date: " + date);
+							else
+								logger.info("Found no date");
+						}
 					}
 				}
 			}
@@ -198,25 +203,51 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-
-	private String getLinks(String input)
+	
+	private LocalDate getDate(String input)
 	{
 		try
 		{
-			Pattern p = Pattern.compile(".*([/\\.no]).*");
-			Matcher m = p.matcher(input);
+			input = input.replaceAll("\n", " ");
+			input = input.replaceAll("\"", "");
 
-			if (m.matches())
-				return m.group(1);
-			else
+			String year = findYear(input);
+			String month = findMonth(input);
+
+			if (year != null && month != null)
 			{
-				return null;
+				String date = year + "-" + month;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM"));
 			}
+			else if (year != null)
+				return LocalDate.parse(year, DateTimeFormat.forPattern("yyyy"));
 		}
 		catch (Exception ex)
 		{
-			return null;
+			ex.printStackTrace();
 		}
+
+		return null;
+	}
+	
+	private String findYear(String input)
+	{
+		String match = RegexUtil.matchRegex(".*(20\\d\\d).*", input);
+
+		if (match != null)
+			return match;
+
+		return null;
+	}
+	
+	private String findMonth(String input)
+	{
+		String match = RegexUtil.matchRegex(".*(\\d\\d).*", input);
+
+		if (match != null)
+			return match;
+
+		return null;
 	}
 
 	@SuppressWarnings("unchecked")
