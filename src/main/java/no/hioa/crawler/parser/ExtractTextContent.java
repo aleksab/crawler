@@ -50,7 +50,7 @@ public class ExtractTextContent
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 
-		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
 
 	}
 
