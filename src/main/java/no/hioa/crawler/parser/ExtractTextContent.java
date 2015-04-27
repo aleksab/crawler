@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
 
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.util.LinkUtil;
-import no.hioa.crawler.util.RegexUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -50,7 +49,7 @@ public class ExtractTextContent
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 
-		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("D:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
 
 	}
 
@@ -179,8 +178,8 @@ public class ExtractTextContent
 							start = 0;
 
 						String source = StringUtils.substring(html, start, index);
-						source = StringUtils.replace(source, url, "");						
-						
+						source = StringUtils.replace(source, url, "");
+
 						if (url.contains("shariaunveiled"))
 						{
 							logger.info(source);
@@ -203,7 +202,7 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-	
+
 	private LocalDate getDate(String input)
 	{
 		try
@@ -211,16 +210,7 @@ public class ExtractTextContent
 			input = input.replaceAll("\n", " ");
 			input = input.replaceAll("\"", "");
 
-			String year = findYear(input);
-			String month = findMonth(input);
-
-			if (year != null && month != null)
-			{
-				String date = year + "-" + month;
-				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM"));
-			}
-			else if (year != null)
-				return LocalDate.parse(year, DateTimeFormat.forPattern("yyyy"));
+			return findDate(input);
 		}
 		catch (Exception ex)
 		{
@@ -229,25 +219,64 @@ public class ExtractTextContent
 
 		return null;
 	}
-	
-	private String findYear(String input)
+
+	private LocalDate findDate(String input)
 	{
-		String match = RegexUtil.matchRegex(".*(20\\d\\d).*", input);
+		try
+		{
+			String regex = ".*(january|february|march|april|may|june|july|august|september|october|november|december)(\\s)(\\d+?)(,\\s)(20\\d\\d).*";
+			Pattern p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			Matcher m = p.matcher(input);
 
-		if (match != null)
-			return match;
+			if (m.matches())
+			{
+				String year = m.group(5);
+				String month = getMonthFromText(m.group(1));
+				String day = m.group(3);
 
-		return null;
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			else
+				return null;
+		}
+		catch (Exception ex)
+		{
+			return null;
+		}
 	}
-	
-	private String findMonth(String input)
+
+	private String getMonthFromText(String input)
 	{
-		String match = RegexUtil.matchRegex(".*(\\d\\d).*", input);
+		switch (input.toLowerCase())
+		{
+			case "january":
+				return "01";
+			case "february":
+				return "02";
+			case "march":
+				return "03";
+			case "april":
+				return "04";
+			case "may":
+				return "05";
+			case "june":
+				return "06";
+			case "july":
+				return "07";
+			case "august":
+				return "08";
+			case "september":
+				return "09";
+			case "october":
+				return "10";
+			case "november":
+				return "11";
+			case "december":
+				return "12";
+		}
 
-		if (match != null)
-			return match;
-
-		return null;
+		return "01";
 	}
 
 	@SuppressWarnings("unchecked")

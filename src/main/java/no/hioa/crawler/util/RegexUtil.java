@@ -12,11 +12,6 @@ public class RegexUtil
 			Pattern p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			Matcher m = p.matcher(input);
 
-			while (m.find())
-			{
-				System.out.println(m.group(1));				
-			}
-			
 			if (m.matches())
 				return m.group(1);
 			else
