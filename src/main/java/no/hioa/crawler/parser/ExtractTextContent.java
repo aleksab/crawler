@@ -18,6 +18,8 @@ import no.hioa.crawler.util.LinkUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.ToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
 import org.apache.log4j.PropertyConfigurator;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
@@ -49,13 +51,46 @@ public class ExtractTextContent
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 
-		System.out.println(extractor.extractLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/1428482196826.html")));
+		//System.out.println(extractor.extractLinks(new Link("frie-ytringer.com"), new File("E:/Data/blogs2/crawl/frieytringercom/1428526543682.html")));
 
+		//extractor.extractFolderLinks(new Link("marchforengland.weebly.com"), new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
+		//		"E:/Data/blogs2/links/"));
+		
+		extractor.extractLinksFolders();
 	}
 
 	public ExtractTextContent()
 	{
 		stopWords = getStopWords();
+	}
+
+	public void extractLinksFolders()
+	{
+		this.extractFolderLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("britainfirst.org"), new File("E:/Data/blogs2/crawl/britainfirstorg/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("demokratene.no"), new File("E:/Data/blogs2/crawl/demokrateneno/"), new File("E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("document.no"), new File("E:/Data/blogs2/crawl/documentno/"), new File("E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("frie-ytringer.com"), new File("E:/Data/blogs2/crawl/frieytringercom/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("frihetspartiet.net"), new File("E:/Data/blogs2/crawl/frihetspartietnet/"),
+				new File("E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("honestthinking.org"), new File("E:/Data/blogs2/crawl/honestthinkingorgno/"), new File(
+				"E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("idag.no"), new File("E:/Data/blogs2/crawl/idagno/"), new File("E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("kristentsamlingsparti.no"), new File("E:/Data/blogs2/crawl/kristentsamlingspartino/"), new File(
+				"E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("lionheartuk.blogspot.no"), new File("E:/Data/blogs2/crawl/lionheartukblogspotno/"), new File(
+				"E:/Data/blogs2/links/"));				
+		this.extractFolderLinks(new Link("marchforengland.weebly.com"), new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
+				"E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("norgesavisen.no"), new File("E:/Data/blogs2/crawl/norgesavisenno/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("norwegiandefenceleague.com"), new File("E:/Data/blogs2/crawl/norwegiandefenceleaguecom/"), new File(
+				"E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("rights.no"), new File("E:/Data/blogs2/crawl/rightsno/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("ronnyalte.net"), new File("E:/Data/blogs2/crawl/ronnyaltenet/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("sian.no"), new File("E:/Data/blogs2/crawl/sianno/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("sisteskanse.net"), new File("E:/Data/blogs2/crawl/sisteskansenet/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("theenglishdefenceleagueextra.blogspot.no"), new File(
+				"E:/Data/blogs2/crawl/theenglishdefenceleagueextrablogspotno/"), new File("E:/Data/blogs2/links/"));
 	}
 
 	public void extractFolders(File folderPath, File outputPath)
@@ -78,6 +113,48 @@ public class ExtractTextContent
 				}
 			}
 		}
+	}
+
+	public boolean extractFolderLinks(Link domain, File folder, File outputFolder)
+	{
+		List<LinkDate> dates = new LinkedList<>();
+
+		for (File file : folder.listFiles())
+		{
+			if (file.isFile())
+			{
+				dates.addAll(extractLinks(domain, file));
+			}
+		}
+
+		try
+		{
+			int found = 0;
+			int notfound = 0;
+			String buffer = "";
+			for (LinkDate date : dates)
+			{
+				buffer += date.date + ":" + date.foundDate + ":" + date.url + "\n";
+
+				if (date.foundDate)
+					found++;
+				else
+					notfound++;
+			}
+
+			buffer = StringUtils.substringBeforeLast(buffer, ",");
+
+			FileUtils.writeStringToFile(new File(outputFolder + "/" + domain.getLink() + "-links.txt"), buffer.toString());
+
+			logger.info("Found dates: {}", found);
+			logger.info("Did not find dates: {}", notfound);
+		}
+		catch (Exception ex)
+		{
+			logger.error("Unknown error", ex);
+		}
+
+		return true;
 	}
 
 	public boolean extractFolderContent(File folder, File outputFolder)
@@ -120,33 +197,12 @@ public class ExtractTextContent
 		return true;
 	}
 
-	public boolean shouldUseLink(Link domain, String url)
+	public List<LinkDate> extractLinks(Link domain, File htmlFile)
 	{
 		try
 		{
-			if (StringUtils.isEmpty(url))
-				return false;
-
-			url = LinkUtil.normalizeDomain(url);
-			if (domain.getLink().equalsIgnoreCase(url) || "/".equalsIgnoreCase(url))
-			{
-				logger.debug("Ignoring link since internal: " + url);
-				return false;
-			}
-
-			return true;
-		}
-		catch (Exception ex)
-		{
-			return false;
-		}
-	}
-
-	public HashMap<LocalDate, String> extractLinks(Link domain, File htmlFile)
-	{
-		try
-		{
-			HashMap<LocalDate, String> links = new HashMap<>();
+			List<LinkDate> links = new LinkedList<>();
+			List<String> unknown = new LinkedList<>();
 
 			String html = FileUtils.readFileToString(htmlFile, "UTF-8");
 			Document doc = Jsoup.parse(html);
@@ -165,12 +221,54 @@ public class ExtractTextContent
 					if (!shouldUseLink(domain, url))
 						continue;
 
-					// logger.info("Trying to get date for link {}", url);
-
-					// consoleLogger.info(e.html());
 					// find tag in source (can be multiple)
 					// extract 500 chars before and after, regex for dates
 					int index = StringUtils.indexOf(html, e.html());
+					if (index != -1)
+					{
+						int start = index - 1000;
+						if (start < 0)
+							start = 0;
+						
+						int end = index + 4000;
+						if (end >= html.length())
+							end = html.length() - 1;
+
+						String source = StringUtils.substring(html, start, end);
+						source = StringUtils.replace(source, url, "");
+
+						if (url.contains("http://www.vg.no/nyheter/innenriks/lyst-til"))
+						{
+							//logger.info(source);							
+						}
+
+						LocalDate date = getDate(source, url);
+
+						if (date != null)
+						{
+							// logger.info("Found date ({}) for {}", date, url);
+							links.add(new LinkDate(url, date, true));
+						}
+						else
+						{
+							//logger.info("Could not find date ({}) for {} in {}", date, url, htmlFile);
+							unknown.add(url);
+						}
+
+					}
+				}
+
+				el = element.select("iframe[src]");
+				for (Element e : el)
+				{
+					String url = e.attr("src");
+
+					if (!shouldUseLink(domain, url))
+						continue;
+
+					// find tag in source (can be multiple)
+					// extract 500 chars before and after, regex for dates
+					int index = StringUtils.indexOf(html, e.toString());
 					if (index != -1)
 					{
 						int start = index - 1000;
@@ -180,17 +278,46 @@ public class ExtractTextContent
 						String source = StringUtils.substring(html, start, index);
 						source = StringUtils.replace(source, url, "");
 
-						if (url.contains("shariaunveiled"))
+						if (url.contains("nzRliBASdCc"))
 						{
-							logger.info(source);
-							LocalDate date = getDate(source);
-
-							if (date != null)
-								logger.info("Found date: " + date);
-							else
-								logger.info("Found no date");
+							// logger.info(source);
 						}
+
+						LocalDate date = getDate(source, url);
+
+						if (date != null)
+						{
+							// logger.info("Found date ({}) for {}", date, url);
+							links.add(new LinkDate(url, date, true));
+						}
+						else
+						{
+							//logger.info("Could not find date ({}) for {} in {}", date, url, htmlFile);
+							unknown.add(url);
+						}
+
 					}
+				}
+			}
+
+			if (!unknown.isEmpty() && !links.isEmpty())
+			{
+				LocalDate firstDate = links.get(0).date;
+				for (String url : unknown)
+					links.add(new LinkDate(url, firstDate, false));
+			}
+			else if (!unknown.isEmpty() && links.isEmpty())
+			{
+				LocalDate fileDate = extractDate(htmlFile);
+				if (fileDate != null)
+				{
+					for (String url : unknown)
+						links.add(new LinkDate(url, fileDate, false));
+				}
+				else
+				{
+					for (String url : unknown)
+						links.add(new LinkDate(url, LocalDate.parse("2000-01-01", DateTimeFormat.forPattern("yyyy-MM-dd")), false));
 				}
 			}
 
@@ -203,14 +330,20 @@ public class ExtractTextContent
 		}
 	}
 
-	private LocalDate getDate(String input)
+	private LocalDate getDate(String input, String url)
 	{
 		try
 		{
 			input = input.replaceAll("\n", " ");
 			input = input.replaceAll("\"", "");
 
-			return findDate(input);
+			LocalDate date = findDate(input);
+			if (date != null)
+				return date;
+			
+			date = findDateFromUrl(url);
+			
+			return date;
 		}
 		catch (Exception ex)
 		{
@@ -237,12 +370,144 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			else
-				return null;
+			
+			regex = ".*(\\s)(\\d+?)(\\s)(january|february|march|april|may|june|july|august|september|october|november|december)(\\s)(20\\d\\d).*";
+			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			m = p.matcher(input);
+
+			if (m.matches())
+			{
+				String year = m.group(6);
+				String month = getMonthFromText(m.group(4));
+				String day = m.group(2);
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			regex = ".*(\\d\\d)(/)(\\d\\d)(/)(20\\d\\d).*";
+			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			m = p.matcher(input);
+			
+			if (m.matches())
+			{
+				String year = m.group(5);
+				String month = m.group(3);
+				String day = m.group(1);
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			return null;
 		}
 		catch (Exception ex)
 		{
 			return null;
+		}
+	}
+	
+	private LocalDate findDateFromUrl(String url)
+	{
+		try
+		{
+			String regex = ".*(/)(20\\d\\d)(/)(\\d\\d)(/)(\\d\\d)(/).*";
+			Pattern p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			Matcher m = p.matcher(url);
+
+			if (m.matches())
+			{
+				String year = m.group(2);
+				String month = getMonthFromText(m.group(4));
+				String day = m.group(6);
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			regex = ".*(/)(20\\d\\d)(/)(\\d\\d)(/).*";
+			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			m = p.matcher(url);
+			
+			if (m.matches())
+			{
+				String year = m.group(2);
+				String month = getMonthFromText(m.group(4));
+				String day = "01";
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			regex = ".*(/)(20\\d\\d)(/)(\\d\\d)(/).*";
+			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			m = p.matcher(url);
+			
+			if (m.matches())
+			{
+				String year = m.group(2);
+				String month = getMonthFromText(m.group(4));
+				String day = "01";
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			regex = ".*(/)(20\\d\\d)(/)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(/)(\\d\\d)(/).*";
+			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+			m = p.matcher(url);
+			
+			if (m.matches())
+			{
+				String year = m.group(2);
+				String month = getMonthFromText(m.group(4));
+				String day = m.group(6);
+
+				String date = year + "-" + month + "-" + day;
+				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
+			}
+			
+			return null;
+		}
+		catch (Exception ex)
+		{
+			return null;
+		}
+	}
+
+
+	public boolean shouldUseLink(Link domain, String url)
+	{
+		try
+		{
+			if (StringUtils.isEmpty(url))
+				return false;
+
+			if (!url.startsWith("http"))
+				return false;
+
+			if (url.contains(domain.getLink()))
+				return false;
+
+			url = url.replace("https://", "http://");
+			
+			if (domain.getLink().equalsIgnoreCase(LinkUtil.normalizeDomain(url)) || "/".equalsIgnoreCase(LinkUtil.normalizeDomain(url)))
+			{
+				logger.debug("Ignoring link since internal: " + url);
+				return false;
+			}
+
+			for (String ignore : getIgnoreLinks())
+			{
+				if (url.contains(ignore))
+					return false;
+			}
+
+			return true;
+		}
+		catch (Exception ex)
+		{
+			return false;
 		}
 	}
 
@@ -455,6 +720,47 @@ public class ExtractTextContent
 		catch (Exception ex)
 		{
 			return null;
+		}
+	}
+
+	private List<String> getIgnoreLinks()
+	{
+		List<String> ignore = new LinkedList<>();
+
+		ignore.add("facebook");
+		ignore.add("ning");
+		ignore.add("twitter");
+		ignore.add("dropbox");
+		ignore.add("mailto");
+		ignore.add("google.com");
+		ignore.add("linkedin.com");
+		ignore.add("paypal");
+		ignore.add("presscustomizr");
+		ignore.add("ideaboxthemes");
+		ignore.add("youtube.com/DocumentNo");
+		ignore.add("presse.no/Etisk-regelverk/");
+		
+		return ignore;
+	}
+
+	public class LinkDate
+	{
+		public String		url;
+		public LocalDate	date;
+		public boolean		foundDate;
+
+		public LinkDate(String url, LocalDate date, boolean foundDate)
+		{
+			super();
+			this.url = url;
+			this.date = date;
+			this.foundDate = foundDate;
+		}
+
+		@Override
+		public String toString()
+		{
+			return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
 		}
 	}
 }
