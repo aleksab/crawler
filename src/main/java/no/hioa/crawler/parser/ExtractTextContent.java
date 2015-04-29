@@ -51,12 +51,16 @@ public class ExtractTextContent
 		// System.out.println(extractor.extractDate(new
 		// File("E:/Data/blogs2/crawl/4freedomsningcom/1428482190019.html")));
 
-		//System.out.println(extractor.extractLinks(new Link("frie-ytringer.com"), new File("E:/Data/blogs2/crawl/frieytringercom/1428526543682.html")));
+		// System.out.println(extractor.extractLinks(new
+		// Link("frie-ytringer.com"), new
+		// File("E:/Data/blogs2/crawl/frieytringercom/1428526543682.html")));
 
-		//extractor.extractFolderLinks(new Link("marchforengland.weebly.com"), new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
-		//		"E:/Data/blogs2/links/"));
-		
-		extractor.extractLinksFolders();
+		// extractor.extractFolderLinks(new Link("marchforengland.weebly.com"),
+		// new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
+		// "E:/Data/blogs2/links/"));
+
+		// extractor.extractLinksFolders();
+		extractor.filterLinksFolder(new File("D:/Data/blogs2/links"), new File("D:/Data/blogs2/alllinks.csv"));
 	}
 
 	public ExtractTextContent()
@@ -64,24 +68,78 @@ public class ExtractTextContent
 		stopWords = getStopWords();
 	}
 
+	public void filterLinksFolder(File folderPath, File outputFile) throws Exception
+	{
+		StringBuffer buffer = new StringBuffer();
+
+		long links = 0;
+		long unknown = 0;
+		long notFound = 0;
+		long invalid = 0;
+		
+		for (File file : folderPath.listFiles())
+		{
+			List<LinkDate> dates = new LinkedList<>();
+			List<String> lines = FileUtils.readLines(file, "UTF-8");
+
+			for (String line : lines)
+			{
+				try
+				{
+					String domain = file.getName().replace("-links.txt", "");
+					String date = StringUtils.substringBefore(line, ":");
+					String foundDate = StringUtils.substringAfter(line, ":");
+					foundDate = StringUtils.substringBefore(foundDate, ":");
+
+					String url = StringUtils.substringAfter(line, ":");
+					url = StringUtils.substringAfter(url, ":");
+					url = LinkUtil.normalizeDomain(url);
+
+					buffer.append(domain).append(";");
+					buffer.append(date).append(";");
+					buffer.append(foundDate).append(";");
+					buffer.append(url).append("\n");
+
+					if (date.equalsIgnoreCase("2000-01-01"))
+						unknown++;
+					if (foundDate.equalsIgnoreCase("false") && !date.equalsIgnoreCase("2000-01-01"))
+						notFound++;
+
+					links++;
+				}
+				catch (Exception ex)
+				{
+					invalid++;
+				}
+			}
+		}
+
+		FileUtils.writeStringToFile(outputFile, buffer.toString());
+
+		logger.info("Links found: {}", links);
+		logger.info("Unknown dates: {}", unknown);
+		logger.info("Not found dates: {}", notFound);
+		logger.info("Invalid: {}", invalid);
+	}
+
 	public void extractLinksFolders()
 	{
 		this.extractFolderLinks(new Link("4freedoms.com"), new File("E:/Data/blogs2/crawl/4freedomsningcom/"), new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("britainfirst.org"), new File("E:/Data/blogs2/crawl/britainfirstorg/"), new File("E:/Data/blogs2/links/"));
-		this.extractFolderLinks(new Link("demokratene.no"), new File("E:/Data/blogs2/crawl/demokrateneno/"), new File("E:/Data/blogs2/links/"));		
-		this.extractFolderLinks(new Link("document.no"), new File("E:/Data/blogs2/crawl/documentno/"), new File("E:/Data/blogs2/links/"));		
+		this.extractFolderLinks(new Link("demokratene.no"), new File("E:/Data/blogs2/crawl/demokrateneno/"), new File("E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("document.no"), new File("E:/Data/blogs2/crawl/documentno/"), new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("frie-ytringer.com"), new File("E:/Data/blogs2/crawl/frieytringercom/"), new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("frihetspartiet.net"), new File("E:/Data/blogs2/crawl/frihetspartietnet/"),
-				new File("E:/Data/blogs2/links/"));		
+				new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("honestthinking.org"), new File("E:/Data/blogs2/crawl/honestthinkingorgno/"), new File(
-				"E:/Data/blogs2/links/"));		
-		this.extractFolderLinks(new Link("idag.no"), new File("E:/Data/blogs2/crawl/idagno/"), new File("E:/Data/blogs2/links/"));		
+				"E:/Data/blogs2/links/"));
+		this.extractFolderLinks(new Link("idag.no"), new File("E:/Data/blogs2/crawl/idagno/"), new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("kristentsamlingsparti.no"), new File("E:/Data/blogs2/crawl/kristentsamlingspartino/"), new File(
-				"E:/Data/blogs2/links/"));		
+				"E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("lionheartuk.blogspot.no"), new File("E:/Data/blogs2/crawl/lionheartukblogspotno/"), new File(
-				"E:/Data/blogs2/links/"));				
+				"E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("marchforengland.weebly.com"), new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
-				"E:/Data/blogs2/links/"));		
+				"E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("norgesavisen.no"), new File("E:/Data/blogs2/crawl/norgesavisenno/"), new File("E:/Data/blogs2/links/"));
 		this.extractFolderLinks(new Link("norwegiandefenceleague.com"), new File("E:/Data/blogs2/crawl/norwegiandefenceleaguecom/"), new File(
 				"E:/Data/blogs2/links/"));
@@ -229,7 +287,7 @@ public class ExtractTextContent
 						int start = index - 1000;
 						if (start < 0)
 							start = 0;
-						
+
 						int end = index + 4000;
 						if (end >= html.length())
 							end = html.length() - 1;
@@ -239,7 +297,7 @@ public class ExtractTextContent
 
 						if (url.contains("http://www.vg.no/nyheter/innenriks/lyst-til"))
 						{
-							//logger.info(source);							
+							// logger.info(source);
 						}
 
 						LocalDate date = getDate(source, url);
@@ -251,7 +309,8 @@ public class ExtractTextContent
 						}
 						else
 						{
-							//logger.info("Could not find date ({}) for {} in {}", date, url, htmlFile);
+							// logger.info("Could not find date ({}) for {} in {}",
+							// date, url, htmlFile);
 							unknown.add(url);
 						}
 
@@ -292,7 +351,8 @@ public class ExtractTextContent
 						}
 						else
 						{
-							//logger.info("Could not find date ({}) for {} in {}", date, url, htmlFile);
+							// logger.info("Could not find date ({}) for {} in {}",
+							// date, url, htmlFile);
 							unknown.add(url);
 						}
 
@@ -340,9 +400,9 @@ public class ExtractTextContent
 			LocalDate date = findDate(input);
 			if (date != null)
 				return date;
-			
+
 			date = findDateFromUrl(url);
-			
+
 			return date;
 		}
 		catch (Exception ex)
@@ -370,7 +430,7 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			regex = ".*(\\s)(\\d+?)(\\s)(january|february|march|april|may|june|july|august|september|october|november|december)(\\s)(20\\d\\d).*";
 			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			m = p.matcher(input);
@@ -384,11 +444,11 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			regex = ".*(\\d\\d)(/)(\\d\\d)(/)(20\\d\\d).*";
 			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			m = p.matcher(input);
-			
+
 			if (m.matches())
 			{
 				String year = m.group(5);
@@ -398,7 +458,7 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			return null;
 		}
 		catch (Exception ex)
@@ -406,7 +466,7 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-	
+
 	private LocalDate findDateFromUrl(String url)
 	{
 		try
@@ -424,11 +484,11 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			regex = ".*(/)(20\\d\\d)(/)(\\d\\d)(/).*";
 			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			m = p.matcher(url);
-			
+
 			if (m.matches())
 			{
 				String year = m.group(2);
@@ -438,11 +498,11 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			regex = ".*(/)(20\\d\\d)(/)(\\d\\d)(/).*";
 			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			m = p.matcher(url);
-			
+
 			if (m.matches())
 			{
 				String year = m.group(2);
@@ -452,11 +512,11 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			regex = ".*(/)(20\\d\\d)(/)(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)(/)(\\d\\d)(/).*";
 			p = Pattern.compile(regex, Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 			m = p.matcher(url);
-			
+
 			if (m.matches())
 			{
 				String year = m.group(2);
@@ -466,7 +526,7 @@ public class ExtractTextContent
 				String date = year + "-" + month + "-" + day;
 				return LocalDate.parse(date, DateTimeFormat.forPattern("yyyy-MM-dd"));
 			}
-			
+
 			return null;
 		}
 		catch (Exception ex)
@@ -474,7 +534,6 @@ public class ExtractTextContent
 			return null;
 		}
 	}
-
 
 	public boolean shouldUseLink(Link domain, String url)
 	{
@@ -490,7 +549,7 @@ public class ExtractTextContent
 				return false;
 
 			url = url.replace("https://", "http://");
-			
+
 			if (domain.getLink().equalsIgnoreCase(LinkUtil.normalizeDomain(url)) || "/".equalsIgnoreCase(LinkUtil.normalizeDomain(url)))
 			{
 				logger.debug("Ignoring link since internal: " + url);
@@ -515,30 +574,30 @@ public class ExtractTextContent
 	{
 		switch (input.toLowerCase())
 		{
-			case "january":
-				return "01";
-			case "february":
-				return "02";
-			case "march":
-				return "03";
-			case "april":
-				return "04";
-			case "may":
-				return "05";
-			case "june":
-				return "06";
-			case "july":
-				return "07";
-			case "august":
-				return "08";
-			case "september":
-				return "09";
-			case "october":
-				return "10";
-			case "november":
-				return "11";
-			case "december":
-				return "12";
+		case "january":
+			return "01";
+		case "february":
+			return "02";
+		case "march":
+			return "03";
+		case "april":
+			return "04";
+		case "may":
+			return "05";
+		case "june":
+			return "06";
+		case "july":
+			return "07";
+		case "august":
+			return "08";
+		case "september":
+			return "09";
+		case "october":
+			return "10";
+		case "november":
+			return "11";
+		case "december":
+			return "12";
 		}
 
 		return "01";
@@ -739,7 +798,7 @@ public class ExtractTextContent
 		ignore.add("ideaboxthemes");
 		ignore.add("youtube.com/DocumentNo");
 		ignore.add("presse.no/Etisk-regelverk/");
-		
+
 		return ignore;
 	}
 
