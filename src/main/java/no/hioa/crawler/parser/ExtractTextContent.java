@@ -55,10 +55,12 @@ public class ExtractTextContent
 		// Link("frie-ytringer.com"), new
 		// File("E:/Data/blogs2/crawl/frieytringercom/1428526543682.html")));
 
-		//extractor.extractFolderLinks(new Link("sian.no"), new File("E:/Data/blogs2/crawl/sianno/"), new File("E:/Data/blogs2/links/"));
+		// extractor.extractFolderLinks(new Link("sian.no"), new File("E:/Data/blogs2/crawl/sianno/"), new File("E:/Data/blogs2/links/"));
 
-		extractor.extractLinksFolders();
-		// extractor.filterLinksFolder(new File("D:/Data/blogs2/links"), new File("D:/Data/blogs2/alllinks.csv"));
+		//extractor.extractLinksFolders();
+		
+		//extractor.filterLinksFolder(new File("E:/Data/blogs2/links - hebdo or charlie"), new File("E:/Data/blogs2/alllinks-hebdo_or_charlie.csv"));
+		extractor.filterLinksFolder(new File("E:/Data/blogs2/links - hebdo"), new File("E:/Data/blogs2/alllinks-hebdo.csv"));
 	}
 
 	public ExtractTextContent()
@@ -261,128 +263,128 @@ public class ExtractTextContent
 			List<String> unknown = new LinkedList<>();
 
 			String html = FileUtils.readFileToString(htmlFile, "UTF-8");
+
+			if (StringUtils.containsIgnoreCase(html, "hebdo") || StringUtils.containsIgnoreCase(html, "charlie"))
+			{
+				Document doc = Jsoup.parse(html);
+				Elements elements = doc.select("p");
+
+				Iterator<Element> it = elements.listIterator();
+				while (it.hasNext())
+				{
+					Element element = it.next();
+
+					Elements el = element.select("a[href]");
+					for (Element e : el)
+					{
+						String url = e.attr("href");
+
+						if (!shouldUseLink(domain, url))
+							continue;
+
+						// find tag in source (can be multiple)
+						// extract 500 chars before and after, regex for dates
+						int index = StringUtils.indexOf(html, e.html());
+						if (index != -1)
+						{
+							int start = index - 1000;
+							if (start < 0)
+								start = 0;
+
+							int end = index + 4000;
+							if (end >= html.length())
+								end = html.length() - 1;
+
+							String source = StringUtils.substring(html, start, end);
+							source = StringUtils.replace(source, url, "");
+
+							if (url.contains("http://www.vg.no/nyheter/innenriks/lyst-til"))
+							{
+								// logger.info(source);
+							}
+
+							LocalDate date = getDate(source, url);
+
+							if (date != null)
+							{
+								// logger.info("Found date ({}) for {}", date, url);
+								links.add(new LinkDate(url, date, true));
+							}
+							else
+							{
+								// logger.info("Could not find date ({}) for {} in {}",
+								// date, url, htmlFile);
+								unknown.add(url);
+							}
+
+						}
+					}
+
+					el = element.select("iframe[src]");
+					for (Element e : el)
+					{
+						String url = e.attr("src");
+
+						if (!shouldUseLink(domain, url))
+							continue;
+
+						// find tag in source (can be multiple)
+						// extract 500 chars before and after, regex for dates
+						int index = StringUtils.indexOf(html, e.toString());
+						if (index != -1)
+						{
+							int start = index - 1000;
+							if (start < 0)
+								start = 0;
+
+							String source = StringUtils.substring(html, start, index);
+							source = StringUtils.replace(source, url, "");
+
+							if (url.contains("nzRliBASdCc"))
+							{
+								// logger.info(source);
+							}
+
+							LocalDate date = getDate(source, url);
+
+							if (date != null)
+							{
+								// logger.info("Found date ({}) for {}", date, url);
+								links.add(new LinkDate(url, date, true));
+							}
+							else
+							{
+								// logger.info("Could not find date ({}) for {} in {}",
+								// date, url, htmlFile);
+								unknown.add(url);
+							}
+
+						}
+					}
+				}
+
+				if (!unknown.isEmpty() && !links.isEmpty())
+				{
+					LocalDate firstDate = links.get(0).date;
+					for (String url : unknown)
+						links.add(new LinkDate(url, firstDate, false));
+				}
+				else if (!unknown.isEmpty() && links.isEmpty())
+				{
+					LocalDate fileDate = extractDate(htmlFile);
+					if (fileDate != null)
+					{
+						for (String url : unknown)
+							links.add(new LinkDate(url, fileDate, false));
+					}
+					else
+					{
+						for (String url : unknown)
+							links.add(new LinkDate(url, LocalDate.parse("2000-01-01", DateTimeFormat.forPattern("yyyy-MM-dd")), false));
+					}
+				}
+			}
 			
-			if (!StringUtils.containsIgnoreCase(html, "hebdo") && !StringUtils.containsIgnoreCase(html, "charlie"))
-				return links;
-				
-			Document doc = Jsoup.parse(html);
-			Elements elements = doc.select("p");
-
-			Iterator<Element> it = elements.listIterator();
-			while (it.hasNext())
-			{
-				Element element = it.next();
-
-				Elements el = element.select("a[href]");
-				for (Element e : el)
-				{
-					String url = e.attr("href");
-
-					if (!shouldUseLink(domain, url))
-						continue;
-
-					// find tag in source (can be multiple)
-					// extract 500 chars before and after, regex for dates
-					int index = StringUtils.indexOf(html, e.html());
-					if (index != -1)
-					{
-						int start = index - 1000;
-						if (start < 0)
-							start = 0;
-
-						int end = index + 4000;
-						if (end >= html.length())
-							end = html.length() - 1;
-
-						String source = StringUtils.substring(html, start, end);
-						source = StringUtils.replace(source, url, "");
-
-						if (url.contains("http://www.vg.no/nyheter/innenriks/lyst-til"))
-						{
-							// logger.info(source);
-						}
-
-						LocalDate date = getDate(source, url);
-
-						if (date != null)
-						{
-							// logger.info("Found date ({}) for {}", date, url);
-							links.add(new LinkDate(url, date, true));
-						}
-						else
-						{
-							// logger.info("Could not find date ({}) for {} in {}",
-							// date, url, htmlFile);
-							unknown.add(url);
-						}
-
-					}
-				}
-
-				el = element.select("iframe[src]");
-				for (Element e : el)
-				{
-					String url = e.attr("src");
-
-					if (!shouldUseLink(domain, url))
-						continue;
-
-					// find tag in source (can be multiple)
-					// extract 500 chars before and after, regex for dates
-					int index = StringUtils.indexOf(html, e.toString());
-					if (index != -1)
-					{
-						int start = index - 1000;
-						if (start < 0)
-							start = 0;
-
-						String source = StringUtils.substring(html, start, index);
-						source = StringUtils.replace(source, url, "");
-
-						if (url.contains("nzRliBASdCc"))
-						{
-							// logger.info(source);
-						}
-
-						LocalDate date = getDate(source, url);
-
-						if (date != null)
-						{
-							// logger.info("Found date ({}) for {}", date, url);
-							links.add(new LinkDate(url, date, true));
-						}
-						else
-						{
-							// logger.info("Could not find date ({}) for {} in {}",
-							// date, url, htmlFile);
-							unknown.add(url);
-						}
-
-					}
-				}
-			}
-
-			if (!unknown.isEmpty() && !links.isEmpty())
-			{
-				LocalDate firstDate = links.get(0).date;
-				for (String url : unknown)
-					links.add(new LinkDate(url, firstDate, false));
-			}
-			else if (!unknown.isEmpty() && links.isEmpty())
-			{
-				LocalDate fileDate = extractDate(htmlFile);
-				if (fileDate != null)
-				{
-					for (String url : unknown)
-						links.add(new LinkDate(url, fileDate, false));
-				}
-				else
-				{
-					for (String url : unknown)
-						links.add(new LinkDate(url, LocalDate.parse("2000-01-01", DateTimeFormat.forPattern("yyyy-MM-dd")), false));
-				}
-			}
-
 			return links;
 		}
 		catch (Exception ex)
