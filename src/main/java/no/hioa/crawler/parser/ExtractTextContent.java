@@ -55,12 +55,10 @@ public class ExtractTextContent
 		// Link("frie-ytringer.com"), new
 		// File("E:/Data/blogs2/crawl/frieytringercom/1428526543682.html")));
 
-		// extractor.extractFolderLinks(new Link("marchforengland.weebly.com"),
-		// new File("E:/Data/blogs2/crawl/marchforenglandweeblycom/"), new File(
-		// "E:/Data/blogs2/links/"));
+		//extractor.extractFolderLinks(new Link("sian.no"), new File("E:/Data/blogs2/crawl/sianno/"), new File("E:/Data/blogs2/links/"));
 
-		// extractor.extractLinksFolders();
-		extractor.filterLinksFolder(new File("D:/Data/blogs2/links"), new File("D:/Data/blogs2/alllinks.csv"));
+		extractor.extractLinksFolders();
+		// extractor.filterLinksFolder(new File("D:/Data/blogs2/links"), new File("D:/Data/blogs2/alllinks.csv"));
 	}
 
 	public ExtractTextContent()
@@ -76,7 +74,7 @@ public class ExtractTextContent
 		long unknown = 0;
 		long notFound = 0;
 		long invalid = 0;
-		
+
 		for (File file : folderPath.listFiles())
 		{
 			List<LinkDate> dates = new LinkedList<>();
@@ -263,6 +261,10 @@ public class ExtractTextContent
 			List<String> unknown = new LinkedList<>();
 
 			String html = FileUtils.readFileToString(htmlFile, "UTF-8");
+			
+			if (!StringUtils.containsIgnoreCase(html, "hebdo") && !StringUtils.containsIgnoreCase(html, "charlie"))
+				return links;
+				
 			Document doc = Jsoup.parse(html);
 			Elements elements = doc.select("p");
 
@@ -574,30 +576,30 @@ public class ExtractTextContent
 	{
 		switch (input.toLowerCase())
 		{
-		case "january":
-			return "01";
-		case "february":
-			return "02";
-		case "march":
-			return "03";
-		case "april":
-			return "04";
-		case "may":
-			return "05";
-		case "june":
-			return "06";
-		case "july":
-			return "07";
-		case "august":
-			return "08";
-		case "september":
-			return "09";
-		case "october":
-			return "10";
-		case "november":
-			return "11";
-		case "december":
-			return "12";
+			case "january":
+				return "01";
+			case "february":
+				return "02";
+			case "march":
+				return "03";
+			case "april":
+				return "04";
+			case "may":
+				return "05";
+			case "june":
+				return "06";
+			case "july":
+				return "07";
+			case "august":
+				return "08";
+			case "september":
+				return "09";
+			case "october":
+				return "10";
+			case "november":
+				return "11";
+			case "december":
+				return "12";
 		}
 
 		return "01";
