@@ -30,5 +30,5 @@ public class InvestigateSiteCrawlerTest
 	{
 		Document document = crawler.fetchContent(new Link("frie-ytringer.com/bannere/FrieYtringerBanner728x90.jpg"));
 		System.out.println(document.head());
-	}
+	}	
 }

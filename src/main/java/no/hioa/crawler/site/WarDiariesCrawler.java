@@ -3,14 +3,13 @@ package no.hioa.crawler.site;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 import no.hioa.crawler.model.Link;
+import no.hioa.crawler.model.Page;
 import no.hioa.crawler.service.DefaultCrawler;
-import no.hioa.crawler.util.LinkUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -32,24 +31,14 @@ public class WarDiariesCrawler extends DefaultCrawler
 	private int					pageCounter		= 0;
 	private HashSet<Link>		externalLinks	= new HashSet<>();
 
-	@Parameter(names = "-site", description = "Site to crawel", required = true)
-	private String				url				= null;
-
 	@Parameter(names = "-save", description = "Should we save pages? Default is false", required = false)
 	private boolean				shouldSavePages	= false;
 
 	@Parameter(names = "-output", description = "Where to store pages", required = false)
 	private String				folder			= "target/";
 
-	@Parameter(names = "-maxSize", description = "Max size of files", required = false)
-	private double				maxSizeMb		= 5 * 1024 * 1014;
-
-	@Parameter(names = "-ignoreLinks", description = "Which links to ignore (comma seperated)", required = false)
-	private String				ignore			= "";
-
 	private String				outputFolder	= null;
 	private boolean				shouldAbort		= false;
-	private List<String>		ignoreList		= null;
 
 	public static void main(String[] args) throws Exception
 	{
@@ -62,7 +51,7 @@ public class WarDiariesCrawler extends DefaultCrawler
 	{
 		new JCommander(this, args);
 
-		this.site = new Link(url);
+		this.site = new Link("wardiaries.wikileaks.org");
 		this.setDomain(site);
 
 		if (shouldSavePages)
@@ -70,30 +59,69 @@ public class WarDiariesCrawler extends DefaultCrawler
 			outputFolder = folder + "/" + removeNoneAlphaNumeric(site.getLink());
 			FileUtils.forceMkdir(new File(outputFolder));
 		}
-
-		ignoreList = new LinkedList<>();
-
-		if (!StringUtils.isEmpty(ignore))
-		{
-			String[] splits = ignore.split(",");
-			for (String ignore : splits)
-			{
-				ignoreList.add(StringUtils.trim(ignore));
-			}
-			logger.info("Ignore list: " + ignoreList);
-		}
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before
+	 * all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
-		// https://wardiaries.wikileaks.org/search/?sort=date&p=48357
 		logger.info("Starting to crawl " + site.getLink());
 		consoleLogger.info("Starting to crawl " + site.getLink());
 
-		startCrawling();
+		// first find all pages
+		for (int i = 1; i <= 48357; i++)
+		{
+			long startTime = System.currentTimeMillis();
+
+			Link pageLink = new Link("https://wardiaries.wikileaks.org/search/?sort=date&p=" + i, false);
+			Document document = fetchContent(pageLink);
+
+			Set<Link> links = new HashSet<>();
+			for (Element element : document.select("a[href]"))
+			{
+				String link = element.attr("abs:href");
+				if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
+				{
+					links.add(new Link(link, !shouldFollowDynamicLinks()));
+				}
+			}
+
+			Page page = new Page(pageLink, null);
+			getQueueManager().updateQueue(Collections.singletonMap(page, links));
+
+			consoleLogger.info("Found {} links on page {}", links.size(), pageLink);
+			beNice(startTime);
+		}
+
+		// get content of all pages
+		Link link = getQueueManager().getNextLink();
+		while (link != null)
+		{
+			logger.info("Got link {} from QM", link.getLink());
+			long startTime = System.currentTimeMillis();
+
+			try
+			{
+				// crawl link
+				Document document = fetchContent(link);
+
+				if (shouldSavePages)
+				{
+					savePage(document, link.getLink());
+				}
+			}
+			catch (Exception ex)
+			{
+				logger.error("Could not crawl link " + link.getLink(), ex);
+			}
+
+			// get next link
+			link = getQueueManager().getNextLink();
+
+			beNice(startTime);
+		}
 
 		saveStats();
 
@@ -102,70 +130,15 @@ public class WarDiariesCrawler extends DefaultCrawler
 
 	protected void crawlDocument(Document document, Link url)
 	{
-		pageCounter++;
 
-		Set<Link> links = new HashSet<>();
-		for (Element element : document.select("a[href]"))
-		{
-			String link = element.attr("abs:href");
-			if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
-			{
-				links.add(new Link(link, !shouldFollowDynamicLinks()));
-			}
-		}
-
-		for (Link link : links)
-		{
-			try
-			{
-				Link domain = new Link(LinkUtil.normalizeDomain(link.getLink()));
-				if (!site.getLink().equalsIgnoreCase(domain.getLink()) && !externalLinks.contains(domain))
-				{
-					externalLinks.add(domain);
-				}
-			}
-			catch (Exception ex)
-			{
-				logger.warn("Could not check if link belongs to domain: {}", link.getLink());
-			}
-		}
-
-		if (shouldSavePages)
-		{
-			savePage(document, url.getLink());
-		}
-
-		if (shouldSavePages && hasReachMaxSize())
-		{
-			shouldAbort = true;
-		}
 	}
 
 	protected boolean shouldIgnoreLink(String link)
 	{
-		for (String ignore : ignoreList)
-		{
-
-			if (StringUtils.containsIgnoreCase(link, ".pdf"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".jpg"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".png"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".gif"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".mpg"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".avi"))
-				return true;
-			if (StringUtils.containsIgnoreCase(link, ".mp3"))
-				return true;
-
-			if (StringUtils.containsIgnoreCase(link, ignore))
-				return true;
-		}
-
-		return false;
+		if (link.contains("/id/"))
+			return false;
+		else
+			return true;
 	}
 
 	protected boolean shouldFollowDynamicLinks()
@@ -222,20 +195,6 @@ public class WarDiariesCrawler extends DefaultCrawler
 		catch (IOException ex)
 		{
 			logger.error("Could not save page", ex);
-		}
-	}
-
-	boolean hasReachMaxSize()
-	{
-		double sizeFolder = (double) FileUtils.sizeOfDirectory(new File(outputFolder)) / (1024d * 1024d);
-		if (sizeFolder >= maxSizeMb)
-		{
-			logger.warn("Size of folder with pages has reached limit: {}", sizeFolder);
-			return true;
-		}
-		else
-		{
-			return false;
 		}
 	}
 

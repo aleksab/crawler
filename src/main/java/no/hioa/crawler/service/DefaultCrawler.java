@@ -124,7 +124,7 @@ public abstract class DefaultCrawler
 		return false;
 	}
 
-	CrawlResult crawlLink(Link link)
+	protected CrawlResult crawlLink(Link link)
 	{
 		Document document = fetchContent(link);
 		if (document == null)
@@ -148,7 +148,7 @@ public abstract class DefaultCrawler
 		return new CrawlResult(content, links);
 	}
 
-	void beNice(long startTime)
+	protected void beNice(long startTime)
 	{
 		try
 		{
@@ -186,7 +186,7 @@ public abstract class DefaultCrawler
 		return links;
 	}
 
-	private class CrawlResult
+	protected class CrawlResult
 	{
 		public StringBuffer	content;
 		public Set<Link>	links;
