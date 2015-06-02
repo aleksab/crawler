@@ -62,8 +62,7 @@ public class WarDiariesCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before
-	 * all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
@@ -75,23 +74,31 @@ public class WarDiariesCrawler extends DefaultCrawler
 		{
 			long startTime = System.currentTimeMillis();
 
-			Link pageLink = new Link("https://wardiaries.wikileaks.org/search/?sort=date&p=" + i, false);
-			Document document = fetchContent(pageLink);
-
-			Set<Link> links = new HashSet<>();
-			for (Element element : document.select("a[href]"))
+			try
 			{
-				String link = element.attr("abs:href");
-				if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
+				Link pageLink = new Link("https://wardiaries.wikileaks.org/search/?sort=date&p=" + i, false);
+				Document document = fetchContent(pageLink);
+
+				Set<Link> links = new HashSet<>();
+				for (Element element : document.select("a[href]"))
 				{
-					links.add(new Link(link, !shouldFollowDynamicLinks()));
+					String link = element.attr("abs:href");
+					if (!StringUtils.isEmpty(link) && !shouldIgnoreLink(link))
+					{
+						links.add(new Link(link, !shouldFollowDynamicLinks()));
+					}
 				}
+
+				Page page = new Page(pageLink, null);
+				getQueueManager().updateQueue(Collections.singletonMap(page, links));
+
+				consoleLogger.info("Found {} links on page {}", links.size(), pageLink);
+			}
+			catch (Exception ex)
+			{
+				logger.error("Unknown error", ex);
 			}
 
-			Page page = new Page(pageLink, null);
-			getQueueManager().updateQueue(Collections.singletonMap(page, links));
-
-			consoleLogger.info("Found {} links on page {}", links.size(), pageLink);
 			beNice(startTime);
 		}
 
