@@ -1,7 +1,17 @@
 package no.hioa.crawler.site;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashSet;
@@ -10,6 +20,7 @@ import java.util.Set;
 import no.hioa.crawler.model.Link;
 import no.hioa.crawler.model.Page;
 import no.hioa.crawler.service.DefaultCrawler;
+import no.hioa.crawler.service.QueueManager;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -37,6 +48,12 @@ public class WarDiariesCrawler extends DefaultCrawler
 	@Parameter(names = "-output", description = "Where to store pages", required = false)
 	private String				folder			= "target/";
 
+	@Parameter(names = "-model", description = "Where to store the model", required = false)
+	private String				model			= "target/model.bin";
+
+	@Parameter(names = "-continue", description = "Should we continue crawling using the model?", required = false)
+	private boolean				shouldContinue	= false;
+
 	private String				outputFolder	= null;
 	private boolean				shouldAbort		= false;
 
@@ -62,12 +79,23 @@ public class WarDiariesCrawler extends DefaultCrawler
 	}
 
 	/**
-	 * Crawl the site and save stats to a file. The crawler will not exit before all found links have been crawled.
+	 * Crawl the site and save stats to a file. The crawler will not exit before
+	 * all found links have been crawled.
 	 */
 	public void crawlSite()
 	{
 		logger.info("Starting to crawl " + site.getLink());
 		consoleLogger.info("Starting to crawl " + site.getLink());
+
+		if (shouldContinue)
+		{
+			logger.info("Continuing crawling from model");
+			QueueManager qm = loadModel();
+			if (qm == null)
+				logger.warn("Could not load model");
+			else
+				setQueueManager(qm);
+		}
 
 		// first find all pages
 		for (int i = 1; i <= 48357; i++)
@@ -77,9 +105,13 @@ public class WarDiariesCrawler extends DefaultCrawler
 			try
 			{
 				Link pageLink = new Link("https://wardiaries.wikileaks.org/search/?sort=date&p=" + i, false);
+				if (getQueueManager().getAllKnownLinks().contains(pageLink))
+					continue;
+				
 				Document document = fetchContent(pageLink);
 
 				Set<Link> links = new HashSet<>();
+				links.add(pageLink);
 				for (Element element : document.select("a[href]"))
 				{
 					String link = element.attr("abs:href");
@@ -93,11 +125,14 @@ public class WarDiariesCrawler extends DefaultCrawler
 				getQueueManager().updateQueue(Collections.singletonMap(page, links));
 
 				consoleLogger.info("Found {} links on page {}", links.size(), pageLink);
+
 			}
 			catch (Exception ex)
 			{
 				logger.error("Unknown error", ex);
 			}
+
+			saveModel(getQueueManager());
 
 			beNice(startTime);
 		}
@@ -126,6 +161,8 @@ public class WarDiariesCrawler extends DefaultCrawler
 
 			// get next link
 			link = getQueueManager().getNextLink();
+
+			saveModel(getQueueManager());
 
 			beNice(startTime);
 		}
@@ -202,6 +239,35 @@ public class WarDiariesCrawler extends DefaultCrawler
 		catch (IOException ex)
 		{
 			logger.error("Could not save page", ex);
+		}
+	}
+
+	void saveModel(QueueManager qm)
+	{
+		try (OutputStream file = new FileOutputStream(model);
+				OutputStream buffer = new BufferedOutputStream(file);
+				ObjectOutput output = new ObjectOutputStream(buffer);)
+		{
+			output.writeObject(qm);
+		}
+		catch (Exception ex)
+		{
+			logger.error("Not possible to serialize model", ex);
+		}
+	}
+
+	QueueManager loadModel()
+	{
+		try (InputStream file = new FileInputStream(model);
+				InputStream buffer = new BufferedInputStream(file);
+				ObjectInput input = new ObjectInputStream(buffer);)
+		{
+			return (QueueManager) input.readObject();
+		}
+		catch (Exception ex)
+		{
+			logger.error("Not possible to deserialize model", ex);
+			return null;
 		}
 	}
 

@@ -1,5 +1,7 @@
 package no.hioa.crawler.model;
 
+import java.io.Serializable;
+
 import no.hioa.crawler.util.LinkUtil;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
@@ -10,7 +12,7 @@ import org.apache.commons.lang.builder.ToStringStyle;
 /**
  * Model for a link.
  */
-public class Link
+public class Link implements Serializable
 {
 	private String	link	= "";
 

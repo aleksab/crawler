@@ -1,5 +1,6 @@
 package no.hioa.crawler.service;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This default queue manager only adds link for a specified domain.
  */
-public class DefaultQueueManager implements QueueManager
+public class DefaultQueueManager implements QueueManager, Serializable
 {
 	private static final Logger			logger			= LoggerFactory.getLogger("fileLogger");
 	private static final Logger			consoleLogger	= LoggerFactory.getLogger("stdoutLogger");
